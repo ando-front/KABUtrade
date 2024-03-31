@@ -3,6 +3,20 @@ import matplotlib.pyplot as plt
 from dotenv import load_dotenv
 import os
 
+# import logging
+# import http.client
+
+# HTTP接続の詳細をログに記録する
+# http.client.HTTPConnection.debuglevel = 1
+
+# ロギングの設定
+# logging.basicConfig()
+# logging.getLogger().setLevel(logging.DEBUG)
+# requests_log = logging.getLogger("requests.packages.urllib3")
+# requests_log.setLevel(logging.DEBUG)
+# requests_log.propagate = True
+
+
 # Constants
 SMA_PERIODS = [5, 20, 25, 30, 60, 75, 100, 200]
 UP_DOWN_PERIODS = [9, 13]
@@ -20,7 +34,8 @@ api_key = os.getenv("API_KEY")
 
 # データ取得
 ts = TimeSeries(key=api_key, output_format='pandas')
-kabuData, meta_data = ts.get_daily(symbol='AAPL', outputsize='full')
+kabuData, meta_data = ts.get_daily(symbol='SPY', outputsize='full')
+# kabuData, meta_data = ts.get_daily(symbol='AAPL', outputsize='full')
 kabuData = kabuData.sort_index(ascending=True)
 
 
@@ -113,5 +128,6 @@ def main():
     signalType, signalKind = get_latest_signals(calculated_kabu_data)
     print(f"買いor売りシグナルSignal Typeの結果: {signalType}")
     print(f"移動平均線のシグナルタイプSignal Kindの結果: {signalKind}")
-    create_graph(calculated_kabu_data)
+#　データプロット関数を実行すると処理が止まるので、コメントアウトしています
+    # create_graph(calculated_kabu_data)
     return signalType, signalKind
