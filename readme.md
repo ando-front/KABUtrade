@@ -63,3 +63,42 @@ plt.ylabel('Price')
 plt.legend()
 plt.show()
 ```
+
+## 環境変数
+
+AlphaVantage API キーを環境変数として設定する必要があります。GitHub Actions では、Secrets を使用して環境変数を設定できます。
+
+以下の手順で設定を行ってください：
+
+GitHub リポジトリの設定ページに移動します。
+左側のメニューから"Secrets"を選択します。
+"New repository secret"をクリックします。
+"Name"フィールドに ALPHAVANTAGE_API_KEY と入力し、"Value"フィールドに API キーを入力します。
+"Add secret"をクリックします。
+これで、API キーはリポジトリの Secrets に保存され、ワークフローから参照できます。
+
+次に、ワークフローファイル（daily_exec.yaml）を更新して、この Secret を環境変数として使用します：
+
+```
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.x"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r ${{ github.workspace }}/requirements.txt
+
+      - name: Run script
+        run: python src/main.py
+        env:
+          ALPHAVANTAGE_API_KEY: ${{ secrets.ALPHAVANTAGE_API_KEY }}
+```
