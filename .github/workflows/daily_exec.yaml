@@ -1,6 +1,7 @@
 name: Run Python script
 
 on:
+  workflow_dispatch: # 手動実行
   schedule:
     # 日本時間毎日8時
     - cron: "0 23 * * *"
