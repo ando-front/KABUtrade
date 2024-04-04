@@ -10,10 +10,12 @@ import os
 load_dotenv()
 
 api_key = os.getenv("API_KEY")
+SYMBOL = 'SPY'
+# SYMBOL = 'AAPL'
 
 # データ取得
 ts = TimeSeries(key=api_key, output_format='pandas')
-data, meta_data = ts.get_daily(symbol='AAPL', outputsize='full')
+data, meta_data = ts.get_daily(symbol=SYMBOL, outputsize='full')
 
 # データを降順にソート
 data = data.sort_index(ascending=True)
