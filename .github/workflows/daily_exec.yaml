@@ -24,4 +24,4 @@ jobs:
           pip install -r ${{ github.workspace }}/requirements.txt
 
       - name: Run script
-        run: python main.py
+        run: python src/main.py
