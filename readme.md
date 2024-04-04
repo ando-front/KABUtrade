@@ -4,12 +4,6 @@ alpha_vantage ライブラリのインストール
 pip install alpha_vantage
 ```
 
-Welcome to Alpha Vantage! Your API key is:
-
-- ***REMOVED-ALPHAVANTAGE-KEY***
-
-. Please record this API key at a safe place for future data access.
-
 ```
 from alpha_vantage.timeseries import TimeSeries
 
