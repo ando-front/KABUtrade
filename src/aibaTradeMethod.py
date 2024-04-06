@@ -18,7 +18,7 @@ import os
 
 
 # Constants
-SMA_PERIODS = [5, 20, 25, 30, 60, 75, 100, 200]
+SMA_PERIODS = [5, 10, 20, 25, 30, 60, 75, 100, 200]
 UP_DOWN_PERIODS = [9, 13]
 CROSS_PERIODS = [25, 75]
 
@@ -39,7 +39,7 @@ kabuData, meta_data = ts.get_daily(symbol='SPY', outputsize='full')
 kabuData = kabuData.sort_index(ascending=True)
 
 
-# 移動平均線の計算
+# 移動平均線の計算(5, 10, 20, 25, 30, 60, 75, 100, 200)
 for period in SMA_PERIODS:
     kabuData[f'SMA_{period}'] = kabuData['4. close'].rolling(window=period).mean()
 
@@ -58,12 +58,47 @@ def calculate_signals(kabuData, UP_DOWN_PERIODS, SMA_PERIODS, CROSS_PERIODS):
     # パンパカパンと売りシグナルの生成
     # 買いシグナル（パンパカパン）：移動平均線が5, 20, 60, 100, 200, 30日の順番で高い
     # 売りシグナル：移動平均線が5, 20, 60, 100, 200, 30日の順番で安い
-    kabuData['Buy_Signal_MA'] = kabuData.apply(lambda row: all(row[f'SMA_{SMA_PERIODS[i]}'] > row[f'SMA_{SMA_PERIODS[i+1]}'] for i in range(len(SMA_PERIODS)-1)), axis=1)
-    kabuData['Sell_Signal_MA'] = kabuData.apply(lambda row: all(row[f'SMA_{SMA_PERIODS[i]}'] < row[f'SMA_{SMA_PERIODS[i+1]}'] for i in range(len(SMA_PERIODS)-1)), axis=1)
+    kabuData['Buy_Signal_MA_PPP'] = kabuData.apply(lambda row: all(row[f'SMA_{SMA_PERIODS[i]}'] > row[f'SMA_{SMA_PERIODS[i+1]}'] for i in range(len(SMA_PERIODS)-1)), axis=1)
+    kabuData['Sell_Signal_MA_reverse_PPP'] = kabuData.apply(lambda row: all(row[f'SMA_{SMA_PERIODS[i]}'] < row[f'SMA_{SMA_PERIODS[i+1]}'] for i in range(len(SMA_PERIODS)-1)), axis=1)
 
     # ゴールデンクロスとデッドクロスのシグナル生成
     kabuData['Buy_Signal_golden_cross'] = (kabuData[f'SMA_{CROSS_PERIODS[0]}'] > kabuData[f'SMA_{CROSS_PERIODS[1]}']) & (kabuData[f'SMA_{CROSS_PERIODS[0]}'].shift(1) < kabuData[f'SMA_{CROSS_PERIODS[1]}'].shift(1))
     kabuData['Sell_Signal_dead_cross'] = (kabuData[f'SMA_{CROSS_PERIODS[0]}'] < kabuData[f'SMA_{CROSS_PERIODS[1]}']) & (kabuData[f'SMA_{CROSS_PERIODS[0]}'].shift(1) > kabuData[f'SMA_{CROSS_PERIODS[1]}'].shift(1))
+
+    # 下半身：買いシグナルシグナル生成
+    # 5日線が上昇トレンドで、前日の日足線が5日線より下にあり、かつ、当日の日足線が陽線で5日線を実体の半分以上突き抜けていれば、買いシグナルとします。
+    # 5日線の上昇トレンドを判定します。5日線の差分が正（つまり、前日よりも上昇している）であれば、上昇トレンドと判定します。
+    # 日足線が5日線より下にあるか判定します。終値が5日線よりも低ければ、その日の日足線は5日線より下にあると判定します。
+    # 陽線かつ5日線を実体の半分以上突き抜けたか判定します。終値が5日線よりも高く、かつ、終値と始値の差（実体）が5日線を突き抜けた部分（終値と5日線との差）の半分以上であれば、5日線を実体の半分以上突き抜けたと判定します。
+    # 買いシグナル（下半身）を生成します。
+    kabuData['5d_trend'] = kabuData['SMA_5'].diff() > 0
+    kabuData['below_5d'] = kabuData['4. close'] < kabuData['SMA_5']
+    kabuData['break_5d'] = (kabuData['4. close'] > kabuData['SMA_5']) & (kabuData['4. close'] - kabuData['1. open'] > (kabuData['4. close'] - kabuData['SMA_5']) / 2)
+    kabuData['buy_signal_lower_harf'] = kabuData['5d_trend'] & kabuData['below_5d'].shift() & kabuData['Up'] & kabuData['break_5d']
+
+    # 売りシグナル（逆下半身）を生成
+    kabuData['5d_down_trend'] = kabuData['SMA_5'].diff() < 0
+    kabuData['above_5d'] = kabuData['4. close'] > kabuData['SMA_5'] 
+    kabuData['break_down_5d'] = (kabuData['4. close'] < kabuData['SMA_5']) & (kabuData['1. open'] - kabuData['4. close'] > (kabuData['SMA_5'] - kabuData['4. close']) / 2)
+    kabuData['sell_signal_Reverse_lower_half'] = kabuData['5d_down_trend'] & kabuData['above_5d'].shift() & kabuData['Down'] & kabuData['break_down_5d']
+
+    # 買いシグナル：くちばし
+    # 5日線と10日線が上昇トレンドで、前日の5日線が10日線より下にあり、かつ、当日の5日線が10日線を上抜けていれば、買いシグナルとします。
+    # 5日線と10日線の上昇トレンドを判定します。5日線と10日線の差分が正（つまり、前日よりも上昇している）であれば、上昇トレンドと判定します。
+    # 5日線が10日線より下にあるか判定します。5日線が10日線よりも低ければ、その日の5日線は10日線より下にあると判定します。
+    # 5日線が10日線を上抜けたか判定します。5日線が10日線よりも高ければ、5日線は10日線を上抜けたと判定します。
+    kabuData['5d_up_trend'] = kabuData['SMA_5'].diff() > 0
+    kabuData['10d_up_trend'] = kabuData['SMA_10'].diff() > 0
+    kabuData['5d_below_10d'] = kabuData['SMA_5'] < kabuData['SMA_10']
+    kabuData['5d_breaks_10d'] = kabuData['SMA_5'] > kabuData['SMA_10']
+    kabuData['buy_signal_bird_beak'] = kabuData['5d_up_trend'] & kabuData['10d_up_trend'] & kabuData['5d_below_10d'].shift() & kabuData['5d_breaks_10d']
+
+    # 売りシグナル：逆くちばし
+    kabuData['5d_down_trend'] = kabuData['SMA_5'].diff() < 0
+    kabuData['10d_down_trend'] = kabuData['SMA_10'].diff() < 0
+    kabuData['5d_above_10d'] = kabuData['SMA_5'] > kabuData['SMA_10']
+    kabuData['5d_breaks_down_10d'] = kabuData['SMA_5'] < kabuData['SMA_10']
+    kabuData['sell_signal_reverse_bird_beak'] = kabuData['5d_down_trend'] & kabuData['10d_down_trend'] & kabuData['5d_above_10d'].shift() & kabuData['5d_breaks_down_10d']
 
     return kabuData
 
@@ -92,12 +127,24 @@ def get_latest_signals(kabuData):
                 signal_type = 'Sell'
                 signal_kind = f'Down for {period} days'
         if signal_type is None:
-            if latest_data['Buy_Signal_MA']:
+            if latest_data['Buy_Signal_MA_PPP']:
                 signal_type = 'Buy'
-                signal_kind = 'Moving Average'
-            elif latest_data['Sell_Signal_MA']:
+                signal_kind = 'PPP'
+            elif latest_data['Sell_Signal_MA_reverse_PPP']:
                 signal_type = 'Sell'
-                signal_kind = 'Moving Average'
+                signal_kind = 'Reverse PPP'
+            elif latest_data['buy_signal_lower_harf']:
+                signal_type = 'Buy'
+                signal_kind = 'Lower Half'
+            elif latest_data['sell_signal_Reverse_lower_half']:
+                signal_type = 'Sell'
+                signal_kind = 'Reverse Lower Half'
+            elif latest_data['buy_signal_bird_beak']:
+                signal_type = 'Buy'
+                signal_kind = 'Bird Beak'
+            elif latest_data['sell_signal_reverse_bird_beak']:
+                signal_type = 'Sell'
+                signal_kind = 'Reverse Bird Beak'
 
     return signal_type, signal_kind
 
