@@ -22,7 +22,7 @@ data.rename(columns={
 }, inplace=True)
 
 # 移動平均線を計算します
-sma_periods = [5, 20, 60, 100, 200, 300]
+sma_periods = [5, 10, 20, 60, 75, 100, 200, 300]
 for period in sma_periods:
     data[f'{period}_day_sma'] = data['Close'].rolling(window=period).mean()
 
@@ -33,7 +33,7 @@ two_years_ago = datetime.now() - timedelta(days=2*365)
 data = data[data.index >= two_years_ago]
 
 # 移動平均線のデータを作成します
-apdict = [mpf.make_addplot(data[f'{period}_day_sma']) for period in [5, 20, 60, 100, 200, 300]]
+apdict = [mpf.make_addplot(data[f'{period}_day_sma']) for period in [5, 10, 20, 60, 75, 100, 200, 300]]
 
 # グラフを描画します
 mpf.plot(data, type='candle', addplot=apdict, volume=True, title='Microsoft Close Price with Moving Averages', ylabel='Price ($)')
