@@ -46,22 +46,23 @@ for period in SMA_PERIODS:
 # 前提条件の追加
 # 上昇トレンドの日数をカウントするための新しい列を追加
 kabuData['up_trend_count'] = 0
+kabuData = kabuData.reset_index(drop=True)
 # 上昇トレンドの日数をカウント
-for i in range(1, len(kabuData)):
+for i in range(2, len(kabuData)):
     # ケースA
-    if kabuData.loc[i, 'SMA_5'] < kabuData.loc[i, 'SMA_20'] and kabuData.loc[i, 'SMA_5'] < kabuData.loc[i, '4. close']:
-        kabuData.loc[i, 'up_trend_count'] = kabuData.loc[i-1, 'up_trend_count'] + 1
+    if kabuData.iloc[i]['SMA_5'] < kabuData.iloc[i]['SMA_20'] and kabuData.iloc[i]['SMA_5'] < kabuData.iloc[i]['4. close']:
+        kabuData.at[i, 'up_trend_count'] = kabuData.at[i-1, 'up_trend_count'] + 1
     # ケースB
-    elif kabuData.loc[i, 'SMA_20'] < kabuData.loc[i, 'SMA_5'] and kabuData.loc[i, 'SMA_20'] < kabuData.loc[i, '4. close'] and kabuData.loc[i, 'SMA_20'] > kabuData.loc[i-1, 'SMA_20']:
-        kabuData.loc[i, 'up_trend_count'] = kabuData.loc[i-1, 'up_trend_count'] + 1
+    elif kabuData.iloc[i]['SMA_20'] < kabuData.iloc[i]['SMA_5'] and kabuData.iloc[i]['SMA_20'] < kabuData.iloc[i]['4. close'] and kabuData.iloc[i]['SMA_20'] > kabuData.iloc[i-1]['SMA_20']:
+        kabuData.at[i, 'up_trend_count'] = kabuData.at[i-1, 'up_trend_count'] + 1
     # ケースC
-    elif kabuData.loc[i, 'SMA_30'] < kabuData.loc[i, 'SMA_5'] and kabuData.loc[i, 'SMA_30'] < kabuData.loc[i, '4. close'] and kabuData.loc[i, 'SMA_20'] > kabuData.loc[i-1, 'SMA_20'] and kabuData.loc[i, 'SMA_30'] > kabuData.loc[i-1, 'SMA_30']:
-        kabuData.loc[i, 'up_trend_count'] = kabuData.loc[i-1, 'up_trend_count'] + 1
+    elif kabuData.iloc[i]['SMA_30'] < kabuData.iloc[i]['SMA_5'] and kabuData.iloc[i]['SMA_30'] < kabuData.iloc[i]['4. close'] and kabuData.iloc[i]['SMA_20'] > kabuData.iloc[i-1]['SMA_20'] and kabuData.iloc[i]['SMA_30'] > kabuData.iloc[i-1]['SMA_30']:
+        kabuData.at[i, 'up_trend_count'] = kabuData.at[i-1, 'up_trend_count'] + 1
     # 上昇トレンドの例外処理
-    elif kabuData.loc[i, 'SMA_30'] < kabuData.loc[i, 'SMA_5'] and kabuData.loc[i, 'SMA_20'] < kabuData.loc[i-1, 'SMA_20'] and kabuData.loc[i, 'SMA_30'] > kabuData.loc[i-1, 'SMA_30'] and kabuData.loc[i, '4. close'] > kabuData.loc[i, 'SMA_30']:
+    elif kabuData.iloc[i]['SMA_30'] < kabuData.iloc[i]['SMA_5'] and kabuData.iloc[i]['SMA_20'] < kabuData.iloc[i-1]['SMA_20'] and kabuData.iloc[i]['SMA_30'] > kabuData.iloc[i-1]['SMA_30'] and kabuData.iloc[i]['4. close'] > kabuData.iloc[i]['SMA_30']:
         continue
     else:
-        kabuData.loc[i, 'up_trend_count'] = 0
+        kabuData.at[i, 'up_trend_count'] = 0
 # 上昇トレンドが3か月以上続いているかどうかを判定する新しい列を追加
 kabuData['is_up_trend'] = kabuData['up_trend_count'] >= 60
 
