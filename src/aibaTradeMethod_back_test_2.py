@@ -6,11 +6,24 @@ import os
 # このコードは、初期資金を設定し、買いシグナルが出たときに全ての資金を使って株を買い、売りシグナルが出たときに全ての株を売るというシンプルな戦略を採用しています。バックテストの結果は、初期資金と最終的なポートフォリオの価値として出力されます。
 # ただし、このコードは非常にシンプルなものであり、実際のトレーディングでは、リスク管理のルール、手数料、スリッページ（注文価格と実際の取引価格との差）などを考慮する必要があります。また、バックテストの結果は過去のデータに基づいているため、未来のパフォーマンスを保証するものではありません。
 
+def get_data(api_key, symbol):
+    try:
+        ts = TimeSeries(key=api_key, output_format='pandas')
+        data, meta_data = ts.get_daily(symbol=symbol, outputsize='full')
+        return data
+    except Exception as e:
+        print(f"Error occurred while fetching data: {e}")
+        return None
+    
 # Alpha VantageのAPIキーを設定
 load_dotenv()
-
 api_key = os.getenv("API_KEY")
-SYMBOL = 'SPY'
+if api_key is None:
+    print("API_KEY is not set in the environment variables.")
+    exit(1)
+    
+api_key = os.getenv("API_KEY")
+SYMBOL = 'SPY' # S&P500 ETF
 # SYMBOL = 'AAPL'
 
 # データ取得
