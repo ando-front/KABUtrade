@@ -1,0 +1,71 @@
+from aibaTradeMethod import calculate_signals
+from alpha_vantage.timeseries import TimeSeries
+from dotenv import load_dotenv
+import os
+
+# このコードは、初期資金を設定し、買いシグナルが出たときに全ての資金を使って株を買い、売りシグナルが出たときに全ての株を売るというシンプルな戦略を採用しています。バックテストの結果は、初期資金と最終的なポートフォリオの価値として出力されます。
+# ただし、このコードは非常にシンプルなものであり、実際のトレーディングでは、リスク管理のルール、手数料、スリッページ（注文価格と実際の取引価格との差）などを考慮する必要があります。また、バックテストの結果は過去のデータに基づいているため、未来のパフォーマンスを保証するものではありません。
+
+# Alpha VantageのAPIキーを設定
+load_dotenv()
+
+api_key = os.getenv("API_KEY")
+SYMBOL = 'SPY'
+# SYMBOL = 'AAPL'
+
+# データ取得
+ts = TimeSeries(key=api_key, output_format='pandas')
+data, meta_data = ts.get_daily(symbol=SYMBOL, outputsize='full')
+
+# データを降順にソート
+data = data.sort_index(ascending=True)
+
+# 移動平均線の計算
+data['SMA_75'] = data['4. close'].rolling(window=75).mean()
+
+# 陽線と陰線の判定
+data['Up'] = data['4. close'] > data['1. open']
+data['Down'] = data['4. close'] < data['1. open']
+
+# Constants
+SMA_PERIODS = [5, 10, 20, 25, 30, 60, 75, 100, 200]
+UP_DOWN_PERIODS = [9, 13]
+CROSS_PERIODS = [25, 75]
+
+for period in SMA_PERIODS:
+    data[f'SMA_{period}'] = data['4. close'].rolling(window=period).mean()
+
+# 既存のロジックを使用してシグナルを計算
+kabuData = calculate_signals(data, UP_DOWN_PERIODS, SMA_PERIODS, CROSS_PERIODS)
+
+# 資産の初期値を設定
+initial_portfolio = 1000000
+cash = initial_portfolio
+shares = 0
+portfolio = []
+signal_counts = {}
+
+# シミュレーションの実行
+for i in range(len(kabuData)):
+    # 買いシグナルが生成された場合
+    if any(kabuData.iloc[i][f'Buy_Signal_{period}'] for period in UP_DOWN_PERIODS) or kabuData.iloc[i]['Buy_Signal_MA_PPP'] or kabuData.iloc[i]['Buy_Signal_golden_cross'] or kabuData.iloc[i]['buy_signal_lower_harf'] or kabuData.iloc[i]['buy_signal_bird_beak']:
+        # print(f"Day {i}: Buy signal generated")
+        shares += cash / kabuData.iloc[i]['4. close']
+        cash = 0
+        signal_counts['Buy'] = signal_counts.get('Buy', 0) + 1
+    # 売りシグナルが生成された場合
+    elif any(kabuData.iloc[i][f'Sell_Signal_{period}'] for period in UP_DOWN_PERIODS) or kabuData.iloc[i]['Sell_Signal_MA_reverse_PPP'] or kabuData.iloc[i]['Sell_Signal_dead_cross'] or kabuData.iloc[i]['sell_signal_Reverse_lower_half'] or kabuData.iloc[i]['sell_signal_reverse_bird_beak']:
+        # print(f"Day {i}: Sell signal generated")
+        cash += shares * kabuData.iloc[i]['4. close']
+        shares = 0
+        signal_counts['Sell'] = signal_counts.get('Sell', 0) + 1
+    portfolio.append(cash + shares * kabuData.iloc[i]['4. close'])
+
+# パフォーマンスの評価
+returns = (portfolio[-1] - initial_portfolio) / initial_portfolio
+print(f'Returns: {returns * 100}%')
+print(f"Initial balance: {initial_portfolio}, Final portfolio: {portfolio[-1]}")
+
+# シグナルの回数を出力
+for signal, count in signal_counts.items():
+    print(f"{signal} signal was generated {count} times")
