@@ -15,6 +15,12 @@ def get_data(api_key, symbol):
         print(f"Error occurred while fetching data: {e}")
         return None
     
+def check_buy_signals(row):
+    return any(row[f'Buy_Signal_{period}'] for period in UP_DOWN_PERIODS) or row['Buy_Signal_MA_PPP'] or row['Buy_Signal_golden_cross'] or row['buy_signal_lower_harf'] or row['buy_signal_bird_beak']
+
+def check_sell_signals(row):
+    return any(row[f'Sell_Signal_{period}'] for period in UP_DOWN_PERIODS) or row['Sell_Signal_MA_reverse_PPP'] or row['Sell_Signal_dead_cross'] or row['sell_signal_Reverse_lower_half'] or row['sell_signal_reverse_bird_beak']
+
 # Alpha VantageのAPIキーを設定
 load_dotenv()
 api_key = os.getenv("API_KEY")
@@ -22,19 +28,10 @@ if api_key is None:
     print("API_KEY is not set in the environment variables.")
     exit(1)
     
-api_key = os.getenv("API_KEY")
 SYMBOL = 'SPY' # S&P500 ETF
 # SYMBOL = 'AAPL'
+data = get_data(api_key, SYMBOL)
 
-# データ取得
-ts = TimeSeries(key=api_key, output_format='pandas')
-data, meta_data = ts.get_daily(symbol=SYMBOL, outputsize='full')
-
-# データを降順にソート
-data = data.sort_index(ascending=True)
-
-# 移動平均線の計算
-data['SMA_75'] = data['4. close'].rolling(window=75).mean()
 
 # 陽線と陰線の判定
 data['Up'] = data['4. close'] > data['1. open']
@@ -60,15 +57,11 @@ signal_counts = {}
 
 # シミュレーションの実行
 for i in range(len(kabuData)):
-    # 買いシグナルが生成された場合
-    if any(kabuData.iloc[i][f'Buy_Signal_{period}'] for period in UP_DOWN_PERIODS) or kabuData.iloc[i]['Buy_Signal_MA_PPP'] or kabuData.iloc[i]['Buy_Signal_golden_cross'] or kabuData.iloc[i]['buy_signal_lower_harf'] or kabuData.iloc[i]['buy_signal_bird_beak']:
-        # print(f"Day {i}: Buy signal generated")
+    if check_buy_signals(kabuData.iloc[i]):
         shares += cash / kabuData.iloc[i]['4. close']
         cash = 0
         signal_counts['Buy'] = signal_counts.get('Buy', 0) + 1
-    # 売りシグナルが生成された場合
-    elif any(kabuData.iloc[i][f'Sell_Signal_{period}'] for period in UP_DOWN_PERIODS) or kabuData.iloc[i]['Sell_Signal_MA_reverse_PPP'] or kabuData.iloc[i]['Sell_Signal_dead_cross'] or kabuData.iloc[i]['sell_signal_Reverse_lower_half'] or kabuData.iloc[i]['sell_signal_reverse_bird_beak']:
-        # print(f"Day {i}: Sell signal generated")
+    elif check_sell_signals(kabuData.iloc[i]):
         cash += shares * kabuData.iloc[i]['4. close']
         shares = 0
         signal_counts['Sell'] = signal_counts.get('Sell', 0) + 1
