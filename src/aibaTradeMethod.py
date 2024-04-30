@@ -27,21 +27,27 @@ CROSS_PERIODS = [25, 75]
 # 移動平均線のゴールデンクロスとデッドクロスを売買のシグナルとするPythonコードは以下の通りです。
 # ただし、Alpha VantageのAPIを使用するにはAPIキーが必要です。
 
+def get_stock_data(symbol, api_key):
+    ts = TimeSeries(key=api_key, output_format='pandas')
+    data, meta_data = ts.get_daily(symbol=symbol, outputsize='full')
+    return data.sort_index(ascending=True)
+
+# 移動平均線の計算(5, 10, 20, 25, 30, 60, 75, 100, 200)
+def calculate_sma(data, periods):
+    for period in periods:
+        data[f'SMA_{period}'] = data['4. close'].rolling(window=period).mean()
+    return data
+
 # Alpha VantageのAPIキーを設定
 load_dotenv()
-
 api_key = os.getenv("API_KEY")
 
 # データ取得
-ts = TimeSeries(key=api_key, output_format='pandas')
-kabuData, meta_data = ts.get_daily(symbol='SPY', outputsize='full')
-# kabuData, meta_data = ts.get_daily(symbol='AAPL', outputsize='full')
-kabuData = kabuData.sort_index(ascending=True)
+kabuData = get_stock_data('SPY', api_key)
 
+# 移動平均線の計算
+kabuData = calculate_sma(kabuData, SMA_PERIODS)
 
-# 移動平均線の計算(5, 10, 20, 25, 30, 60, 75, 100, 200)
-for period in SMA_PERIODS:
-    kabuData[f'SMA_{period}'] = kabuData['4. close'].rolling(window=period).mean()
 
 # 前提条件の追加
 # 上昇トレンドの日数をカウントするための新しい列を追加
