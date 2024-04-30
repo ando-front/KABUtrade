@@ -3,18 +3,18 @@ import matplotlib.pyplot as plt
 from dotenv import load_dotenv
 import os
 
-# import logging
+import logging
 # import http.client
 
 # HTTP接続の詳細をログに記録する
 # http.client.HTTPConnection.debuglevel = 1
 
 # ロギングの設定
-# logging.basicConfig()
-# logging.getLogger().setLevel(logging.DEBUG)
-# requests_log = logging.getLogger("requests.packages.urllib3")
-# requests_log.setLevel(logging.DEBUG)
-# requests_log.propagate = True
+logging.basicConfig()
+logging.getLogger().setLevel(logging.DEBUG)
+requests_log = logging.getLogger("requests.packages.urllib3")
+requests_log.setLevel(logging.DEBUG)
+requests_log.propagate = True
 
 
 # Constants
@@ -50,7 +50,7 @@ kabuData = calculate_sma(kabuData, SMA_PERIODS)
 
 
 # 前提条件の追加
-# 上昇トレンドの日数をカウントするための新しい列を追加
+# 上昇トレンドが3か月間継続する場合のみ、売買シグナルの判定を行う
 kabuData['up_trend_count'] = 0
 kabuData = kabuData.reset_index(drop=True)
 # 上昇トレンドの日数をカウント
@@ -62,17 +62,17 @@ for i in range(2, len(kabuData)):
     elif kabuData.iloc[i]['SMA_20'] < kabuData.iloc[i]['SMA_5'] and kabuData.iloc[i]['SMA_20'] < kabuData.iloc[i]['4. close'] and kabuData.iloc[i]['SMA_20'] > kabuData.iloc[i-1]['SMA_20']:
         kabuData.at[i, 'up_trend_count'] = kabuData.at[i-1, 'up_trend_count'] + 1
     # ケースC
-    elif kabuData.iloc[i]['SMA_30'] < kabuData.iloc[i]['SMA_5'] and kabuData.iloc[i]['SMA_30'] < kabuData.iloc[i]['4. close'] and kabuData.iloc[i]['SMA_20'] > kabuData.iloc[i-1]['SMA_20'] and kabuData.iloc[i]['SMA_30'] > kabuData.iloc[i-1]['SMA_30']:
+    elif kabuData.iloc[i]['SMA_60'] < kabuData.iloc[i]['SMA_5'] and kabuData.iloc[i]['SMA_60'] < kabuData.iloc[i]['4. close'] and kabuData.iloc[i]['SMA_20'] > kabuData.iloc[i-1]['SMA_20'] and kabuData.iloc[i]['SMA_60'] > kabuData.iloc[i-1]['SMA_60']:
         kabuData.at[i, 'up_trend_count'] = kabuData.at[i-1, 'up_trend_count'] + 1
     # 上昇トレンドの例外処理
-    elif kabuData.iloc[i]['SMA_30'] < kabuData.iloc[i]['SMA_5'] and kabuData.iloc[i]['SMA_20'] < kabuData.iloc[i-1]['SMA_20'] and kabuData.iloc[i]['SMA_30'] > kabuData.iloc[i-1]['SMA_30'] and kabuData.iloc[i]['4. close'] > kabuData.iloc[i]['SMA_30']:
+    elif kabuData.iloc[i]['SMA_60'] < kabuData.iloc[i]['SMA_5'] and kabuData.iloc[i]['SMA_20'] < kabuData.iloc[i-1]['SMA_20'] and kabuData.iloc[i]['SMA_60'] > kabuData.iloc[i-1]['SMA_60'] and kabuData.iloc[i]['4. close'] > kabuData.iloc[i]['SMA_60']:
         continue
     else:
         kabuData.at[i, 'up_trend_count'] = 0
 # 上昇トレンドが3か月以上続いているかどうかを判定する新しい列を追加
 kabuData['is_up_trend'] = kabuData['up_trend_count'] >= 60
 
-# 下降トレンドの日数をカウントするための新しい列を追加
+# 下降トレンドが3か月間継続する場合のみ、売買シグナルの判定を行う
 kabuData['down_trend_count'] = 0
 # 下降トレンドの日数をカウント
 for i in range(1, len(kabuData)):
@@ -83,10 +83,10 @@ for i in range(1, len(kabuData)):
     elif kabuData.loc[i, 'SMA_5'] < kabuData.loc[i, 'SMA_20'] and kabuData.loc[i, 'SMA_20'] < kabuData.loc[i-1, 'SMA_20'] and kabuData.loc[i, '4. close'] < kabuData.loc[i, 'SMA_20']:
         kabuData.loc[i, 'down_trend_count'] = kabuData.loc[i-1, 'down_trend_count'] + 1
     # ケースF
-    elif kabuData.loc[i, 'SMA_5'] < kabuData.loc[i, 'SMA_30'] and kabuData.loc[i, 'SMA_20'] < kabuData.loc[i-1, 'SMA_20'] and kabuData.loc[i, 'SMA_30'] < kabuData.loc[i-1, 'SMA_30'] and kabuData.loc[i, '4. close'] < kabuData.loc[i, 'SMA_30']:
+    elif kabuData.loc[i, 'SMA_5'] < kabuData.loc[i, 'SMA_60'] and kabuData.loc[i, 'SMA_20'] < kabuData.loc[i-1, 'SMA_20'] and kabuData.loc[i, 'SMA_60'] < kabuData.loc[i-1, 'SMA_60'] and kabuData.loc[i, '4. close'] < kabuData.loc[i, 'SMA_60']:
         kabuData.loc[i, 'down_trend_count'] = kabuData.loc[i-1, 'down_trend_count'] + 1
     # 下降トレンドの例外処理
-    elif kabuData.loc[i, 'SMA_5'] < kabuData.loc[i, 'SMA_30'] and kabuData.loc[i, 'SMA_20'] > kabuData.loc[i-1, 'SMA_20'] and kabuData.loc[i, 'SMA_30'] < kabuData.loc[i-1, 'SMA_30'] and kabuData.loc[i, '4. close'] < kabuData.loc[i, 'SMA_30']:
+    elif kabuData.loc[i, 'SMA_5'] < kabuData.loc[i, 'SMA_60'] and kabuData.loc[i, 'SMA_20'] > kabuData.loc[i-1, 'SMA_20'] and kabuData.loc[i, 'SMA_60'] < kabuData.loc[i-1, 'SMA_60'] and kabuData.loc[i, '4. close'] < kabuData.loc[i, 'SMA_60']:
         continue
     else:
         kabuData.loc[i, 'down_trend_count'] = 0
@@ -150,53 +150,60 @@ def calculate_signals(kabuData, UP_DOWN_PERIODS, SMA_PERIODS, CROSS_PERIODS):
     kabuData['5d_above_10d'] = kabuData['SMA_5'] > kabuData['SMA_10']
     kabuData['5d_breaks_down_10d'] = kabuData['SMA_5'] < kabuData['SMA_10']
     kabuData['sell_signal_reverse_bird_beak'] = kabuData['5d_down_trend'] & kabuData['10d_down_trend'] & kabuData['5d_above_10d'].shift() & kabuData['5d_breaks_down_10d']
-
     return kabuData
 
 
-# 最新の日付でのシグナルを出力
 # 最新のデータがゴールデンクロスかデッドクロスのシグナルを持っているかチェック
 # ゴールデンクロスもデッドクロスもない場合、連続上昇日数または連続下落日数に基づくシグナル、移動平均に基づくシグナルをチェックします。
 # チェックの結果として、シグナルを返却します
-def get_latest_signals(kabuData):
-    latest_data = kabuData.iloc[-1]
-    signal_type = None
-    signal_kind = None
-
+def check_cross_signals(latest_data):
     if latest_data['Buy_Signal_golden_cross'] and latest_data['is_up_trend']:
-        signal_type = 'Buy'
-        signal_kind = 'Golden Cross'
+        print('Buy Signal: Golden Cross')
+        return 'Buy', 'Golden Cross'
     elif latest_data['Sell_Signal_dead_cross'] and latest_data['is_down_trend']:
-        signal_type = 'Sell'
-        signal_kind = 'Dead Cross'
-    else:
-        for period in UP_DOWN_PERIODS:
-            if latest_data[f'Buy_Signal_{period}'] and latest_data['is_up_trend']:
-                signal_type = 'Buy'
-                signal_kind = f'Up for {period} days'
-            elif latest_data[f'Sell_Signal_{period}'] and latest_data['is_down_trend']:
-                signal_type = 'Sell'
-                signal_kind = f'Down for {period} days'
-        if signal_type is None:
-            if latest_data['Buy_Signal_MA_PPP'] and latest_data['is_up_trend']:
-                signal_type = 'Buy'
-                signal_kind = 'PPP'
-            elif latest_data['Sell_Signal_MA_reverse_PPP'] and latest_data['is_down_trend']:
-                signal_type = 'Sell'
-                signal_kind = 'Reverse PPP'
-            elif latest_data['buy_signal_lower_harf'] and latest_data['is_up_trend']:
-                signal_type = 'Buy'
-                signal_kind = 'Lower Half'
-            elif latest_data['sell_signal_Reverse_lower_half'] and latest_data['is_down_trend']:
-                signal_type = 'Sell'
-                signal_kind = 'Reverse Lower Half'
-            elif latest_data['buy_signal_bird_beak'] and latest_data['is_up_trend']:
-                signal_type = 'Buy'
-                signal_kind = 'Bird Beak'
-            elif latest_data['sell_signal_reverse_bird_beak'] and latest_data['is_down_trend']:
-                signal_type = 'Sell'
-                signal_kind = 'Reverse Bird Beak'
+        print('Sell Signal: Dead Cross')
+        return 'Sell', 'Dead Cross'
+    return None, None
 
+def check_up_down_signals(latest_data, UP_DOWN_PERIODS):
+    for period in UP_DOWN_PERIODS:
+        if latest_data[f'Buy_Signal_{period}'] and latest_data['is_up_trend']:
+            print(f'Buy Signal: Up for {period} days')
+            return 'Buy', f'Up for {period} days'
+        elif latest_data[f'Sell_Signal_{period}'] and latest_data['is_down_trend']:
+            print(f'Sell Signal: Down for {period} days')
+            return 'Sell', f'Down for {period} days'
+    return None, None
+
+def check_other_signals(latest_data):
+    if latest_data['Buy_Signal_MA_PPP'] and latest_data['is_up_trend']:
+        print('Buy Signal: PPP')
+        return 'Buy', 'PPP'
+    elif latest_data['Sell_Signal_MA_reverse_PPP'] and latest_data['is_down_trend']:
+        print('Sell Signal: Reverse PPP')
+        return 'Sell', 'Reverse PPP'
+    elif latest_data['buy_signal_lower_harf'] and latest_data['is_up_trend']:
+        print('Buy Signal: Lower Half')
+        return 'Buy', 'Lower Half'
+    elif latest_data['sell_signal_Reverse_lower_half'] and latest_data['is_down_trend']:
+        print('Sell Signal: Reverse Lower Half')
+        return 'Sell', 'Reverse Lower Half'
+    elif latest_data['buy_signal_bird_beak'] and latest_data['is_up_trend']:
+        print('Buy Signal: Bird Beak')
+        return 'Buy', 'Bird Beak'
+    elif latest_data['sell_signal_reverse_bird_beak'] and latest_data['is_down_trend']:
+        print('Sell Signal: Reverse Bird Beak')
+        return 'Sell', 'Reverse Bird Beak'
+    return None, None
+
+# 最新の日付でのシグナルを出力
+def get_latest_signals(kabuData, UP_DOWN_PERIODS):
+    latest_data = kabuData.iloc[-1]
+    signal_type, signal_kind = check_cross_signals(latest_data)
+    if signal_type is None:
+        signal_type, signal_kind = check_up_down_signals(latest_data, UP_DOWN_PERIODS)
+    if signal_type is None:
+        signal_type, signal_kind = check_other_signals(latest_data)
     return signal_type, signal_kind
 
 # データのプロット
