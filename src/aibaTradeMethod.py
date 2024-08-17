@@ -16,11 +16,14 @@ requests_log = logging.getLogger("requests.packages.urllib3")
 requests_log.setLevel(logging.DEBUG)
 requests_log.propagate = True
 
+# Alpha VantageのAPIキーを設定
+load_dotenv()
+api_key = os.getenv("API_KEY")
 
 # Constants
-SMA_PERIODS = [5, 10, 20, 25, 30, 60, 75, 100, 200, 300]
-UP_DOWN_PERIODS = [9, 13]
-CROSS_PERIODS = [25, 75]
+# SMA_PERIODS = [5, 10, 20, 25, 30, 60, 75, 100, 200, 300]
+# UP_DOWN_PERIODS = [9, 13]
+# CROSS_PERIODS = [25, 75]
 
 
 # Alpha VantageのAPIを使用して株価データを取得し、
@@ -32,16 +35,11 @@ def get_stock_data(symbol, api_key):
     data, meta_data = ts.get_daily(symbol=symbol, outputsize='full')
     return data.sort_index(ascending=True)
 
-# 移動平均線の計算(5, 10, 20, 25, 30, 60, 75, 100, 200)
+# 移動平均線の計算(5, 10, 20, 25, 30, 60, 75, 100, 200, 300)
 def calculate_sma(data, periods):
     for period in periods:
         data[f'SMA_{period}'] = data['4. close'].rolling(window=period).mean()
     return data
-
-# Alpha VantageのAPIキーを設定
-load_dotenv()
-api_key = os.getenv("API_KEY")
-
 
 
 # 前提条件の追加
@@ -76,24 +74,21 @@ def calculate_trend_counts(data, trend_func):
             trend_count[i] = 0
     return trend_count
 
-# データ取得
-stock_data = get_stock_data('SPY', api_key)
 
-# 移動平均線の計算
-stock_data = calculate_sma(stock_data, SMA_PERIODS)
-
-# 上昇トレンドのカウントと判定
-stock_data['up_trend_count'] = calculate_trend_counts(stock_data, is_up_trend)
-stock_data['is_up_trend'] = stock_data['up_trend_count'] >= 60
-
-# 下降トレンドのカウントと判定
-stock_data['down_trend_count'] = calculate_trend_counts(stock_data, is_down_trend)
-stock_data['is_down_trend'] = stock_data['down_trend_count'] >= 60
-
-# 陽線と陰線の判定
-stock_data['Up'] = stock_data['4. close'] > stock_data['1. open']
-stock_data['Down'] = stock_data['4. close'] < stock_data['1. open']
-
+# データ準備
+def prepare_data(up_down_periods, sma_periods, cross_periods):
+    # 株価データ取得 
+    stock_data = get_stock_data('SPY', api_key)
+    # 上昇トレンドのカウントと判定
+    stock_data['up_trend_count'] = calculate_trend_counts(stock_data, is_up_trend)
+    stock_data['is_up_trend'] = stock_data['up_trend_count'] >= 60
+    # 下降トレンドのカウントと判定
+    stock_data['down_trend_count'] = calculate_trend_counts(stock_data, is_down_trend)
+    stock_data['is_down_trend'] = stock_data['down_trend_count'] >= 60
+    # 陽線と陰線の判定
+    stock_data['Down'] = stock_data['4. close'] < stock_data['1. open']
+    stock_data['Up'] = stock_data['4. close'] > stock_data['1. open']
+    return stock_data
 
 # シグナル生成
 def generate_continuous_signal(data, periods, condition, signal_name):
@@ -184,6 +179,9 @@ def reverse_bird_beak_signal(data):
 
 def calculate_signals(stock_data, up_down_periods, sma_periods, cross_periods):
     """各種シグナルを生成するメイン関数"""
+    # 移動平均線の計算
+    stock_data = calculate_sma(stock_data, sma_periods)
+
     # 買い/売りシグナル（連続陰線・陽線）
     # 買いシグナル：陰線が9日間または13日間連続する、または日足が75日線を下から上に抜けて陽線で終わる
     # 売りシグナル：陽線が9日間または13日間連続する、または日足が75日線を上から下に抜けて陰線で終わる
