@@ -18,7 +18,7 @@ requests_log.propagate = True
 
 
 # Constants
-SMA_PERIODS = [5, 10, 20, 25, 30, 60, 75, 100, 200]
+SMA_PERIODS = [5, 10, 20, 25, 30, 60, 75, 100, 200, 300]
 UP_DOWN_PERIODS = [9, 13]
 CROSS_PERIODS = [25, 75]
 
@@ -100,15 +100,25 @@ kabuData['Down'] = kabuData['4. close'] < kabuData['1. open']
 
 # シグナルの生成
 def calculate_signals(kabuData, UP_DOWN_PERIODS, SMA_PERIODS, CROSS_PERIODS):
-    # 買いシグナル：日足が75日線を下から上に抜けて陽線で終わる、または陰線が9日間または13日間連続する
-    # 売りシグナル：日足が75日線を上から下に抜けて陰線で終わる、または陽線が9日間または13日間連続する
+    # 買いシグナル：陰線が9日間または13日間連続する、または日足が75日線を下から上に抜けて陽線で終わる
+    # 売りシグナル：陽線が9日間または13日間連続する、または日足が75日線を上から下に抜けて陰線で終わる
     for period in UP_DOWN_PERIODS:
-        kabuData[f'Buy_Signal_{period}'] = (kabuData['Down'].rolling(window=period).sum() == period)
-        kabuData[f'Sell_Signal_{period}'] = (kabuData['Up'].rolling(window=period).sum() == period)
+        kabuData[f'Buy_Signal_{period}'] = (
+            (kabuData['Down'].rolling(window=period).sum() == period) | 
+            ((kabuData['4. close'] > kabuData['SMA_75']) & 
+            (kabuData['4. close'].shift(1) < kabuData['SMA_75'].shift(1)) & 
+            (kabuData['Up']))
+        )
+        kabuData[f'Sell_Signal_{period}'] = (
+            (kabuData['Up'].rolling(window=period).sum() == period) |
+            ((kabuData['4. close'] < kabuData['SMA_75']) & 
+            (kabuData['4. close'].shift(1) > kabuData['SMA_75'].shift(1)) & 
+            (kabuData['Down'])) 
+        )
 
     # パンパカパンと売りシグナルの生成
-    # 買いシグナル（パンパカパン）：移動平均線が5, 20, 60, 100, 200, 30日の順番で高い
-    # 売りシグナル：移動平均線が5, 20, 60, 100, 200, 30日の順番で安い
+    # 買いシグナル（パンパカパン）：移動平均線が5, 20, 60, 100, 200, 300日の順番で高い
+    # 売りシグナル：移動平均線が5, 20, 60, 100, 200, 300日の順番で安い
     kabuData['Buy_Signal_MA_PPP'] = kabuData.apply(lambda row: all(row[f'SMA_{SMA_PERIODS[i]}'] > row[f'SMA_{SMA_PERIODS[i+1]}'] for i in range(len(SMA_PERIODS)-1)), axis=1)
     kabuData['Sell_Signal_MA_reverse_PPP'] = kabuData.apply(lambda row: all(row[f'SMA_{SMA_PERIODS[i]}'] < row[f'SMA_{SMA_PERIODS[i+1]}'] for i in range(len(SMA_PERIODS)-1)), axis=1)
 
