@@ -239,7 +239,7 @@ def create_graph(calculated_data):
 def main():
     calculated_kabu_data = calculate_signals(kabuData, UP_DOWN_PERIODS, SMA_PERIODS, CROSS_PERIODS)
     # get_latest_signals関数を呼び出し、結果をsignalTypeとsignalKindに割り当てる
-    signalType, signalKind = get_latest_signals(calculated_kabu_data)
+    signalType, signalKind = get_latest_signals(calculated_kabu_data, UP_DOWN_PERIODS)
     print(f"買いor売りシグナルSignal Typeの結果: {signalType}")
     print(f"移動平均線のシグナルタイプSignal Kindの結果: {signalKind}")
 #　データプロット関数を実行すると処理が止まるので、コメントアウトしています
