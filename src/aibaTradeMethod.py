@@ -38,68 +38,17 @@ def calculate_sma(data, periods):
         data[f'SMA_{period}'] = data['4. close'].rolling(window=period).mean()
     return data
 
-# Alpha VantageのAPIキーを設定
-load_dotenv()
-api_key = os.getenv("API_KEY")
+# # Alpha VantageのAPIキーを設定
+# load_dotenv()
+# api_key = os.getenv("API_KEY")
 
-# データ取得
-kabuData = get_stock_data('SPY', api_key)
+# # データ取得
+# kabuData = get_stock_data('SPY', api_key)
 
-# 移動平均線の計算
-kabuData = calculate_sma(kabuData, SMA_PERIODS)
-
-
-# 前提条件の追加
-# 上昇トレンドが3か月間継続する場合のみ、売買シグナルの判定を行う
-kabuData['up_trend_count'] = 0
-kabuData = kabuData.reset_index(drop=True)
-# 上昇トレンドの日数をカウント
-for i in range(2, len(kabuData)):
-    # ケースA
-    if kabuData.iloc[i]['SMA_5'] < kabuData.iloc[i]['SMA_20'] and kabuData.iloc[i]['SMA_5'] < kabuData.iloc[i]['4. close']:
-        kabuData.at[i, 'up_trend_count'] = kabuData.at[i-1, 'up_trend_count'] + 1
-    # ケースB
-    elif kabuData.iloc[i]['SMA_20'] < kabuData.iloc[i]['SMA_5'] and kabuData.iloc[i]['SMA_20'] < kabuData.iloc[i]['4. close'] and kabuData.iloc[i]['SMA_20'] > kabuData.iloc[i-1]['SMA_20']:
-        kabuData.at[i, 'up_trend_count'] = kabuData.at[i-1, 'up_trend_count'] + 1
-    # ケースC
-    elif kabuData.iloc[i]['SMA_60'] < kabuData.iloc[i]['SMA_5'] and kabuData.iloc[i]['SMA_60'] < kabuData.iloc[i]['4. close'] and kabuData.iloc[i]['SMA_20'] > kabuData.iloc[i-1]['SMA_20'] and kabuData.iloc[i]['SMA_60'] > kabuData.iloc[i-1]['SMA_60']:
-        kabuData.at[i, 'up_trend_count'] = kabuData.at[i-1, 'up_trend_count'] + 1
-    # 上昇トレンドの例外処理
-    elif kabuData.iloc[i]['SMA_60'] < kabuData.iloc[i]['SMA_5'] and kabuData.iloc[i]['SMA_20'] < kabuData.iloc[i-1]['SMA_20'] and kabuData.iloc[i]['SMA_60'] > kabuData.iloc[i-1]['SMA_60'] and kabuData.iloc[i]['4. close'] > kabuData.iloc[i]['SMA_60']:
-        continue
-    else:
-        kabuData.at[i, 'up_trend_count'] = 0
-# 上昇トレンドが3か月以上続いているかどうかを判定する新しい列を追加
-kabuData['is_up_trend'] = kabuData['up_trend_count'] >= 60
-
-# 下降トレンドが3か月間継続する場合のみ、売買シグナルの判定を行う
-kabuData['down_trend_count'] = 0
-# 下降トレンドの日数をカウント
-for i in range(1, len(kabuData)):
-    # ケースD
-    if kabuData.loc[i, 'SMA_20'] < kabuData.loc[i, 'SMA_5'] and kabuData.loc[i, '4. close'] < kabuData.loc[i, 'SMA_5']:
-        kabuData.loc[i, 'down_trend_count'] = kabuData.loc[i-1, 'down_trend_count'] + 1
-    # ケースE
-    elif kabuData.loc[i, 'SMA_5'] < kabuData.loc[i, 'SMA_20'] and kabuData.loc[i, 'SMA_20'] < kabuData.loc[i-1, 'SMA_20'] and kabuData.loc[i, '4. close'] < kabuData.loc[i, 'SMA_20']:
-        kabuData.loc[i, 'down_trend_count'] = kabuData.loc[i-1, 'down_trend_count'] + 1
-    # ケースF
-    elif kabuData.loc[i, 'SMA_5'] < kabuData.loc[i, 'SMA_60'] and kabuData.loc[i, 'SMA_20'] < kabuData.loc[i-1, 'SMA_20'] and kabuData.loc[i, 'SMA_60'] < kabuData.loc[i-1, 'SMA_60'] and kabuData.loc[i, '4. close'] < kabuData.loc[i, 'SMA_60']:
-        kabuData.loc[i, 'down_trend_count'] = kabuData.loc[i-1, 'down_trend_count'] + 1
-    # 下降トレンドの例外処理
-    elif kabuData.loc[i, 'SMA_5'] < kabuData.loc[i, 'SMA_60'] and kabuData.loc[i, 'SMA_20'] > kabuData.loc[i-1, 'SMA_20'] and kabuData.loc[i, 'SMA_60'] < kabuData.loc[i-1, 'SMA_60'] and kabuData.loc[i, '4. close'] < kabuData.loc[i, 'SMA_60']:
-        continue
-    else:
-        kabuData.loc[i, 'down_trend_count'] = 0
-# 下降トレンドが3か月以上続いているかどうかを判定する新しい列を追加
-kabuData['is_down_trend'] = kabuData['down_trend_count'] >= 60
-
-
-# 陽線と陰線の判定
-kabuData['Up'] = kabuData['4. close'] > kabuData['1. open']
-kabuData['Down'] = kabuData['4. close'] < kabuData['1. open']
 
 # シグナルの生成
 def calculate_signals(kabuData, UP_DOWN_PERIODS, SMA_PERIODS, CROSS_PERIODS):
+
     # 買いシグナル：陰線が9日間または13日間連続する、または日足が75日線を下から上に抜けて陽線で終わる
     # 売りシグナル：陽線が9日間または13日間連続する、または日足が75日線を上から下に抜けて陰線で終わる
     for period in UP_DOWN_PERIODS:
@@ -216,27 +165,79 @@ def get_latest_signals(kabuData, UP_DOWN_PERIODS):
         signal_type, signal_kind = check_other_signals(latest_data)
     return signal_type, signal_kind
 
-# データのプロット
-def create_graph(calculated_data):
-    plt.figure(figsize=(12,5))
-    colors = ['blue', 'red', 'green', 'violet', 'indigo', 'orange', 'black']
-    for period, color in zip(SMA_PERIODS, colors):
-        plt.plot(kabuData.index, kabuData[f'SMA_{period}'], label=f'{period} Day SMA', color=color)
+# # データのプロット
+# def create_graph(calculated_data):
+#     plt.figure(figsize=(12,5))
+#     colors = ['blue', 'red', 'green', 'violet', 'indigo', 'orange', 'black']
+#     for period, color in zip(SMA_PERIODS, colors):
+#         plt.plot(kabuData.index, kabuData[f'SMA_{period}'], label=f'{period} Day SMA', color=color)
 
-    plt.plot(kabuData[kabuData['Buy_Signal_golden_cross']].index, kabuData['SMA_5'][kabuData['Buy_Signal_golden_cross']], '^', markersize=10, color='m', label='buy signal')
-    plt.plot(kabuData[kabuData['Sell_Signal_dead_cross']].index, kabuData['SMA_5'][kabuData['Sell_Signal_dead_cross']], 'v', markersize=10, color='k', label='sell signal')
+#     plt.plot(kabuData[kabuData['Buy_Signal_golden_cross']].index, kabuData['SMA_5'][kabuData['Buy_Signal_golden_cross']], '^', markersize=10, color='m', label='buy signal')
+#     plt.plot(kabuData[kabuData['Sell_Signal_dead_cross']].index, kabuData['SMA_5'][kabuData['Sell_Signal_dead_cross']], 'v', markersize=10, color='k', label='sell signal')
 
-    plt.title('Apple Close Price with Moving Averages and Signals')
-    plt.xlabel('Date')
-    plt.ylabel('Price')
-    plt.legend()
-    plt.grid()
-    plt.show()
+#     plt.title('Apple Close Price with Moving Averages and Signals')
+#     plt.xlabel('Date')
+#     plt.ylabel('Price')
+#     plt.legend()
+#     plt.grid()
+#     plt.show()
 
 # 注文実行
 # このサンプルコードでは、実際の売買注文は行わず、シグナルの生成だけを行います。
 
-def main():
+def main(kabuData):
+    # 移動平均線の計算
+    kabuData = calculate_sma(kabuData, SMA_PERIODS)
+
+    # 前提条件の追加
+    # 上昇トレンドが3か月間継続する場合のみ、売買シグナルの判定を行う
+    kabuData['up_trend_count'] = 0
+    kabuData = kabuData.reset_index(drop=True)
+    # 上昇トレンドの日数をカウント
+    for i in range(2, len(kabuData)):
+        # ケースA
+        if kabuData.iloc[i]['SMA_5'] < kabuData.iloc[i]['SMA_20'] and kabuData.iloc[i]['SMA_5'] < kabuData.iloc[i]['4. close']:
+            kabuData.at[i, 'up_trend_count'] = kabuData.at[i-1, 'up_trend_count'] + 1
+        # ケースB
+        elif kabuData.iloc[i]['SMA_20'] < kabuData.iloc[i]['SMA_5'] and kabuData.iloc[i]['SMA_20'] < kabuData.iloc[i]['4. close'] and kabuData.iloc[i]['SMA_20'] > kabuData.iloc[i-1]['SMA_20']:
+            kabuData.at[i, 'up_trend_count'] = kabuData.at[i-1, 'up_trend_count'] + 1
+        # ケースC
+        elif kabuData.iloc[i]['SMA_60'] < kabuData.iloc[i]['SMA_5'] and kabuData.iloc[i]['SMA_60'] < kabuData.iloc[i]['4. close'] and kabuData.iloc[i]['SMA_20'] > kabuData.iloc[i-1]['SMA_20'] and kabuData.iloc[i]['SMA_60'] > kabuData.iloc[i-1]['SMA_60']:
+            kabuData.at[i, 'up_trend_count'] = kabuData.at[i-1, 'up_trend_count'] + 1
+        # 上昇トレンドの例外処理
+        elif kabuData.iloc[i]['SMA_60'] < kabuData.iloc[i]['SMA_5'] and kabuData.iloc[i]['SMA_20'] < kabuData.iloc[i-1]['SMA_20'] and kabuData.iloc[i]['SMA_60'] > kabuData.iloc[i-1]['SMA_60'] and kabuData.iloc[i]['4. close'] > kabuData.iloc[i]['SMA_60']:
+            continue
+        else:
+            kabuData.at[i, 'up_trend_count'] = 0
+    # 上昇トレンドが3か月以上続いているかどうかを判定する新しい列を追加
+    kabuData['is_up_trend'] = kabuData['up_trend_count'] >= 60
+
+    # 下降トレンドが3か月間継続する場合のみ、売買シグナルの判定を行う
+    kabuData['down_trend_count'] = 0
+    # 下降トレンドの日数をカウント
+    for i in range(1, len(kabuData)):
+        # ケースD
+        if kabuData.loc[i, 'SMA_20'] < kabuData.loc[i, 'SMA_5'] and kabuData.loc[i, '4. close'] < kabuData.loc[i, 'SMA_5']:
+            kabuData.loc[i, 'down_trend_count'] = kabuData.loc[i-1, 'down_trend_count'] + 1
+        # ケースE
+        elif kabuData.loc[i, 'SMA_5'] < kabuData.loc[i, 'SMA_20'] and kabuData.loc[i, 'SMA_20'] < kabuData.loc[i-1, 'SMA_20'] and kabuData.loc[i, '4. close'] < kabuData.loc[i, 'SMA_20']:
+            kabuData.loc[i, 'down_trend_count'] = kabuData.loc[i-1, 'down_trend_count'] + 1
+        # ケースF
+        elif kabuData.loc[i, 'SMA_5'] < kabuData.loc[i, 'SMA_60'] and kabuData.loc[i, 'SMA_20'] < kabuData.loc[i-1, 'SMA_20'] and kabuData.loc[i, 'SMA_60'] < kabuData.loc[i-1, 'SMA_60'] and kabuData.loc[i, '4. close'] < kabuData.loc[i, 'SMA_60']:
+            kabuData.loc[i, 'down_trend_count'] = kabuData.loc[i-1, 'down_trend_count'] + 1
+        # 下降トレンドの例外処理
+        elif kabuData.loc[i, 'SMA_5'] < kabuData.loc[i, 'SMA_60'] and kabuData.loc[i, 'SMA_20'] > kabuData.loc[i-1, 'SMA_20'] and kabuData.loc[i, 'SMA_60'] < kabuData.loc[i-1, 'SMA_60'] and kabuData.loc[i, '4. close'] < kabuData.loc[i, 'SMA_60']:
+            continue
+        else:
+            kabuData.loc[i, 'down_trend_count'] = 0
+    # 下降トレンドが3か月以上続いているかどうかを判定する新しい列を追加
+    kabuData['is_down_trend'] = kabuData['down_trend_count'] >= 60
+
+
+    # 陽線と陰線の判定
+    kabuData['Up'] = kabuData['4. close'] > kabuData['1. open']
+    kabuData['Down'] = kabuData['4. close'] < kabuData['1. open']
+
     calculated_kabu_data = calculate_signals(kabuData, UP_DOWN_PERIODS, SMA_PERIODS, CROSS_PERIODS)
     # get_latest_signals関数を呼び出し、結果をsignalTypeとsignalKindに割り当てる
     signalType, signalKind = get_latest_signals(calculated_kabu_data, UP_DOWN_PERIODS)
