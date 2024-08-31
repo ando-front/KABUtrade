@@ -1,4 +1,4 @@
-from aibaTradeMethod import calculate_signals
+from aiba_trade_method import calculate_signals
 from alpha_vantage.timeseries import TimeSeries
 from dotenv import load_dotenv
 import os
