@@ -1,6 +1,9 @@
+from typing import List, Optional, Tuple
 import matplotlib.pyplot as plt
 
 import logging
+
+import pandas as pd
 
 from calculaters.signals import calculate_signals
 from calculaters.trends import count_trend_days
@@ -19,14 +22,14 @@ requests_log.propagate = True
 
 
 # Constants
-SMA_PERIODS = [5, 10, 20, 25, 30, 60, 75, 100, 200, 300]
-UP_DOWN_PERIODS = [9, 13]
-CROSS_PERIODS = [25, 75]
+SMA_PERIODS: List[int] = [5, 10, 20, 25, 30, 60, 75, 100, 200, 300]
+UP_DOWN_PERIODS: List[int] = [9, 13]
+CROSS_PERIODS: List[int] = [25, 75]
 
 
 
 # 移動平均線の計算(5, 10, 20, 25, 30, 60, 75, 100, 200)
-def calculate_sma(data, periods):
+def calculate_sma(data: pd.DataFrame, periods: List[int]) -> pd.DataFrame:
     for period in periods:
         data[f'SMA_{period}'] = data['4. close'].rolling(window=period).mean()
     return data
@@ -35,7 +38,7 @@ def calculate_sma(data, periods):
 # 最新のデータがゴールデンクロスかデッドクロスのシグナルを持っているかチェック
 # ゴールデンクロスもデッドクロスもない場合、連続上昇日数または連続下落日数に基づくシグナル、移動平均に基づくシグナルをチェックします。
 # チェックの結果として、シグナルを返却します
-def check_cross_signals(latest_data):
+def check_cross_signals(latest_data: pd.Series) -> Tuple[Optional[str], Optional[str]]:
     if latest_data['Buy_Signal_golden_cross'] and latest_data['is_up_trend']:
         print('Buy Signal: Golden Cross')
         return 'Buy', 'Golden Cross'
@@ -44,7 +47,7 @@ def check_cross_signals(latest_data):
         return 'Sell', 'Dead Cross'
     return None, None
 
-def check_up_down_signals(latest_data, UP_DOWN_PERIODS):
+def check_up_down_signals(latest_data: pd.Series, UP_DOWN_PERIODS: List[int]) -> Tuple[Optional[str], Optional[str]]:
     for period in UP_DOWN_PERIODS:
         if latest_data[f'Buy_Signal_{period}'] and latest_data['is_up_trend']:
             print(f'Buy Signal: Up for {period} days')
@@ -54,7 +57,7 @@ def check_up_down_signals(latest_data, UP_DOWN_PERIODS):
             return 'Sell', f'Down for {period} days'
     return None, None
 
-def check_other_signals(latest_data):
+def check_other_signals(latest_data: pd.Series) -> Tuple[Optional[str], Optional[str]]:
     if latest_data['Buy_Signal_MA_PPP'] and latest_data['is_up_trend']:
         print('Buy Signal: PPP')
         return 'Buy', 'PPP'
@@ -76,7 +79,7 @@ def check_other_signals(latest_data):
     return None, None
 
 # 最新の日付でのシグナルを出力
-def get_latest_signals(kabuData, UP_DOWN_PERIODS):
+def get_latest_signals(kabuData: pd.DataFrame, UP_DOWN_PERIODS: List[int]) -> Tuple[Optional[str], Optional[str]]:
     latest_data = kabuData.iloc[-1]
     signal_type, signal_kind = check_cross_signals(latest_data)
     if signal_type is None:
@@ -107,7 +110,7 @@ def get_latest_signals(kabuData, UP_DOWN_PERIODS):
 
 # 注文実行
 # このサンプルコードでは、実際の売買注文は行わず、シグナルの生成だけを行います。
-def main(kabuData):
+def main(kabuData: pd.DataFrame) -> Tuple[str, str]:
     # 移動平均線の計算
     kabuData = calculate_sma(kabuData, SMA_PERIODS)
 

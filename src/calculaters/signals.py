@@ -1,8 +1,10 @@
+from typing import List
+import pandas as pd
 from helpers.trend_logic import is_break_5d, is_break_down_5d, is_buy_signal, is_dead_cross, is_golden_cross, is_pampakapam, is_sell_signal, is_trend
 
 # シグナルの生成
-def calculate_signals(kabuData, UP_DOWN_PERIODS, SMA_PERIODS, CROSS_PERIODS):
-
+def calculate_signals(kabuData: pd.DataFrame, UP_DOWN_PERIODS: List[int], SMA_PERIODS: List[int], CROSS_PERIODS: List[int]) -> pd.DataFrame:
+    
     # 買いシグナル：陰線が9日間または13日間連続する、または日足が75日線を下から上に抜けて陽線で終わる
     # 売りシグナル：陽線が9日間または13日間連続する、または日足が75日線を上から下に抜けて陰線で終わる
     for period in UP_DOWN_PERIODS:

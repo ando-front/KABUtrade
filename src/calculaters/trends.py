@@ -1,4 +1,7 @@
-def count_trend_days(kabuData):
+import pandas as pd
+
+
+def count_trend_days(kabuData: pd.DataFrame) -> pd.DataFrame:
     kabuData['up_trend_count'] = 0
     kabuData['down_trend_count'] = 0
     kabuData = kabuData.reset_index(drop=True)
@@ -12,7 +15,7 @@ def count_trend_days(kabuData):
 
     return kabuData
 
-def calculate_up_trend(kabuData, i):
+def calculate_up_trend(kabuData: pd.DataFrame, i: int) -> int:
     if kabuData.iloc[i]['SMA_5'] < kabuData.iloc[i]['SMA_20'] and kabuData.iloc[i]['SMA_5'] < kabuData.iloc[i]['4. close']:
         return kabuData.at[i-1, 'up_trend_count'] + 1
     elif kabuData.iloc[i]['SMA_20'] < kabuData.iloc[i]['SMA_5'] and kabuData.iloc[i]['SMA_20'] < kabuData.iloc[i]['4. close'] and kabuData.iloc[i]['SMA_20'] > kabuData.iloc[i-1]['SMA_20']:
@@ -24,7 +27,7 @@ def calculate_up_trend(kabuData, i):
     else:
         return 0
 
-def calculate_down_trend(kabuData, i):
+def calculate_down_trend(kabuData: pd.DataFrame, i: int) -> int:
     if kabuData.loc[i, 'SMA_20'] < kabuData.loc[i, 'SMA_5'] and kabuData.loc[i, '4. close'] < kabuData.loc[i, 'SMA_5']:
         return kabuData.loc[i-1, 'down_trend_count'] + 1
     elif kabuData.loc[i, 'SMA_5'] < kabuData.loc[i, 'SMA_20'] and kabuData.loc[i, 'SMA_20'] < kabuData.loc[i-1, 'SMA_20'] and kabuData.loc[i, '4. close'] < kabuData.loc[i, 'SMA_20']:
