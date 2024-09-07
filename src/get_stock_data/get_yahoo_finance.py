@@ -28,7 +28,8 @@ def plot_stock_data(symbols: List[str], start: str, end: str) -> None:
 
 def get_yfinance_stock_data() -> None:
     api_key = load_api_key()
-    symbols = ["7203.T"]  # 例：トヨタ自動車、ソフトバンク、ソニー
+    # symbols = ["7203.T"]  # 例：トヨタ自動車、ソフトバンク、ソニー
+    symbols = ["^N225"]
     end_date = datetime.now()
     start_date = end_date - timedelta(days=365*10)
     plot_stock_data(symbols, start=start_date.strftime('%Y-%m-%d'), end=end_date.strftime('%Y-%m-%d'))
