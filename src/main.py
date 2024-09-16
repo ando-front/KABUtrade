@@ -25,7 +25,7 @@ def process_stock_data(symbol: str, api_key: str = None) -> Tuple[str, str, str]
 
 def main():
     api_key = load_api_key()  # APIキーの読み込み
-    symbols = ['SPY', 'AAPL', '^N225']  # 処理するシンボルのリスト
+    symbols = ['SPY', 'AAPL', '^N225', "7203.T", "7011.T"]  # 処理するシンボルのリスト
     signals = []
 
     for symbol in symbols:
