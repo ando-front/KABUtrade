@@ -1,12 +1,16 @@
 import requests
 
-def sendEmailForSignal(signalType, signalKind):
+def sendEmailForSignal(signals):
     # GASアプリのURL
     web_app_url = "https://script.google.com/macros/s/AKfycbx-rRtWXEvNiB6E2JozVRgHbgqsDAq7phKhhrgx3KLhQ8ow3DIFDrp5vihbb14m3zs1tg/exec"
+    
+    # シグナルデータを整形
     data = {
-      'signalType': signalType,  # 'buy' または 'sell'
-      'signalKind': signalKind   # シグナルの種類
+        'signals': [
+            {'symbol': symbol, 'signalType': signalType, 'signalKind': signalKind}
+            for symbol, signalType, signalKind in signals
+        ]
     }
 
-    response = requests.post(web_app_url, data=data)
+    response = requests.post(web_app_url, json=data)
     print(response.text)

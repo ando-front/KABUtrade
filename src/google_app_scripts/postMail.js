@@ -4,12 +4,10 @@ function doGet(e) {
   );
 }
 
-// この関数はHTTP POSTリクエストを受け取り、そのリクエストのパラメータに含まれる`signalType`に応じて、異なるメールを送信します。この関数をGASのウェブアプリケーションとしてデプロイし、得られたエンドポイントURLに対して適切な`signalType`パラメータ（`buy`または`sell`）を含むPOSTリクエストを送信することで、メールの自動送信が行われます。
 function doPost(e) {
-  // リクエストから信号の種類とシグナルの詳細を取得
-  // リクエストから信号の種類とシグナルの詳細を取得
-  const { signalType, signalKind } = e.parameter;
-  let subject = "";
+  // リクエストからシグナルのリストを取得
+  const signals = JSON.parse(e.postData.contents).signals;
+  let subject = "シグナル通知";
   let message = "";
 
   const footerMessage = `
@@ -29,27 +27,16 @@ function doPost(e) {
     5 日線と 10 日線が上昇トレンドで、前日の 5 日線が 10 日線より下にあり、かつ、当日の 5 日線が 10 日線を上抜けていれば、買いシグナルとします。逆を売りシグナルとします。
   `;
 
-  // 信号の種類に応じて件名と本文を設定
-  const signalMessages = {
-    Buy: {
-      subject: "買いシグナルの通知",
-      message: (signalKind) =>
-        `賢二さん、SP500の買いシグナル（${signalKind}）が出ましたので、買い注文を入れてください。`,
-    },
-    Sell: {
-      subject: "売りシグナルの通知",
-      message: (signalKind) =>
-        `賢二さん、SP500の売りシグナル（${signalKind}）が出ましたので、売り注文を入れてください。`,
-    },
-    default: {
-      subject: "買いor売りシグナルはありませんでした",
-      message: () => "本日は買いor売りシグナルはありませんでした",
-    },
-  };
-
-  ({ subject, message } =
-    signalMessages[signalType] || signalMessages["default"]);
-  message = message(signalKind);
+  // 各シグナルに対してメッセージを作成
+  signals.forEach((signal) => {
+    const { symbol, signalType, signalKind } = signal;
+    const signalMessages = {
+      Buy: `賢二さん、${symbol}の買いシグナル（${signalKind}）が出ましたので、買い注文を入れてください。\n`,
+      Sell: `賢二さん、${symbol}の売りシグナル（${signalKind}）が出ましたので、売り注文を入れてください。\n`,
+      default: `本日は${symbol}の買いor売りシグナルはありませんでした。\n`,
+    };
+    message += signalMessages[signalType] || signalMessages["default"];
+  });
 
   // メール送信
   MailApp.sendEmail({
