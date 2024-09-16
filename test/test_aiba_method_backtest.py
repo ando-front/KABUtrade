@@ -68,7 +68,7 @@ def main() -> None:
         calculated_kabu_data = backtest_signals(kabuData)
         run_backtest(calculated_kabu_data)
 
-    symbols = ["^N225", "7203.T", "7011.T"]
+    symbols = ["^N225", "7203.T", "7011.T", "9843.T", "6146.T", "6857.T"]
     for symbol in symbols:
         kabuData: pd.DataFrame = get_yfinance_stock_data(symbol)
         kabuData: pd.DataFrame = standardize_headers(kabuData) # 株価のヘッダー名統一
