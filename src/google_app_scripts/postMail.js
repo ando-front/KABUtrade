@@ -30,12 +30,13 @@ function doPost(e) {
   // 各シグナルに対してメッセージを作成
   signals.forEach((signal) => {
     const { symbol, signalType, signalKind } = signal;
-    const signalMessages = {
-      Buy: `賢二さん、${symbol}の買いシグナル（${signalKind}）が出ましたので、買い注文を入れてください。\n`,
-      Sell: `賢二さん、${symbol}の売りシグナル（${signalKind}）が出ましたので、売り注文を入れてください。\n`,
-      default: `本日は${symbol}の買いor売りシグナルはありませんでした。\n`,
-    };
-    message += signalMessages[signalType] || signalMessages["default"];
+    if (signalType === "Buy") {
+      message += `賢二さん、${symbol}の買いシグナル（${signalKind}）が出ましたので、買い注文を入れてください。\n`;
+    } else if (signalType === "Sell") {
+      message += `賢二さん、${symbol}の売りシグナル（${signalKind}）が出ましたので、売り注文を入れてください。\n`;
+    } else {
+      message += `本日は${symbol}の買いor売りシグナルはありませんでした。\n`;
+    }
   });
 
   // メール送信

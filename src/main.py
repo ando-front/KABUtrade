@@ -32,6 +32,7 @@ def main():
         signals.append(process_stock_data(symbol, api_key))
 
     # まとめてシグナルを送信
+    print(signals)
     send_email_for_signal.sendEmailForSignal(signals)
     
 if __name__ == '__main__':
