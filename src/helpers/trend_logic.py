@@ -1,6 +1,18 @@
 import pandas as pd
 from typing import List, Union
 
+def standardize_headers(kabuData: pd.DataFrame) -> pd.DataFrame:
+    # ヘッダー名のマッピング
+    header_mapping = {
+        'Close': '4. close',
+        'Open': '1. open',
+        'High': '2. high',
+        'Low': '3. low'
+    }
+    # ヘッダー名を統一
+    kabuData = kabuData.rename(columns=header_mapping)
+    return kabuData
+
 def is_buy_signal(kabuData: pd.DataFrame, period: int) -> pd.Series:
     return (
         (kabuData['Down'].rolling(window=period).sum() == period) | 
