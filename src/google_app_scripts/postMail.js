@@ -39,6 +39,14 @@ function doPost(e) {
     }
   });
 
+  // タイトルをシグナルの有無に応じて設定
+  if (signals.length === 0) {
+    subject += " - シグナルなし";
+  } else {
+    const symbols = signals.map((signal) => signal.symbol).join(", ");
+    subject += ` - ${symbols}`;
+  }
+
   // メール送信
   MailApp.sendEmail({
     to: "angie07.inet@gmail.com",
