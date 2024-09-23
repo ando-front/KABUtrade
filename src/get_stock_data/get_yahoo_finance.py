@@ -35,7 +35,7 @@ def plot_stock_data(symbol: str, start: str, end: str) -> pd.DataFrame:
 
 def get_yfinance_stock_data(symbol) -> pd.DataFrame:
     end_date = datetime.now()
-    start_date = end_date - timedelta(days=365*5)
+    start_date = end_date - timedelta(days=365*10)
     KabuData = plot_stock_data(symbol, start=start_date.strftime('%Y-%m-%d'), end=end_date.strftime('%Y-%m-%d'))
     return KabuData.sort_index(ascending=True)
 
