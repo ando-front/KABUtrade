@@ -47,12 +47,26 @@ function doPost(e) {
     subject += ` - ${symbols}`;
   }
 
-  // メール送信
-  MailApp.sendEmail({
-    to: "angie07.inet@gmail.com",
-    subject: subject,
-    body: message + "\n" + footerMessage,
-  });
+  //メール送信先を読み込む
+  var sheet = SpreadsheetApp.openById(
+    "1rOONBODf_vfWV4eLzlXSfC0a5eK4_IW4TpRXcXOVQ9E"
+  ).getSheetByName("EmailList");
+  if (sheet) {
+    var data = sheet.getRange("A:A").getValues();
+    // 各メールアドレスにメールを送信
+    for (var i = 0; i < data.length; i++) {
+      var emailAddress = data[i][0];
+      if (emailAddress) {
+        MailApp.sendEmail({
+          to: emailAddress,
+          subject: subject,
+          body: message + "\n" + footerMessage,
+        });
+      }
+    }
+  } else {
+    return ContentService.createTextOutput("Sheet not found.");
+  }
 
   // 正常終了のレスポンスを返す
   return ContentService.createTextOutput("Email sent.");
