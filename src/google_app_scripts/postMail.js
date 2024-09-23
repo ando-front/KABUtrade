@@ -47,7 +47,7 @@ function doPost(e) {
     subject += ` - ${symbols}`;
   }
 
-  //メール送信先を読み込む
+  //メール送信先を読み込む(googleドライブ上のスプレッドシート：EmaillList)
   var sheet = SpreadsheetApp.openById(
     "1rOONBODf_vfWV4eLzlXSfC0a5eK4_IW4TpRXcXOVQ9E"
   ).getSheetByName("EmailList");
