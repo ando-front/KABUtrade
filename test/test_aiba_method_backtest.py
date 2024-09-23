@@ -64,14 +64,22 @@ def main() -> None:
     symbols_NY = ["SPY", "AAPL"]
     for symbol in symbols_NY:
         kabuData: pd.DataFrame = get_stock_data(symbol, api_key)
-        kabuData: pd.DataFrame = standardize_headers(kabuData) # 株価のヘッダー名統一
+        # 過去x年間のデータを抽出
+        x_year_ago = datetime.now() - timedelta(days=365 * 1)
+        kabuData = kabuData[kabuData.index >= x_year_ago.strftime('%Y-%m-%d')]
+        # 株価のヘッダー名統一
+        kabuData: pd.DataFrame = standardize_headers(kabuData)
         calculated_kabu_data = backtest_signals(kabuData)
         run_backtest(calculated_kabu_data)
 
     symbols = ["^N225", "7203.T", "7011.T", "9843.T", "6146.T", "6857.T"]
     for symbol in symbols:
         kabuData: pd.DataFrame = get_yfinance_stock_data(symbol)
-        kabuData: pd.DataFrame = standardize_headers(kabuData) # 株価のヘッダー名統一
+        # 過去x年間のデータを抽出
+        x_year_ago = datetime.now() - timedelta(days=365 * 1)
+        kabuData = kabuData[kabuData.index >= x_year_ago.strftime('%Y-%m-%d')]
+        # 株価のヘッダー名統一
+        kabuData: pd.DataFrame = standardize_headers(kabuData)
         calculated_kabu_data = backtest_signals(kabuData)
         run_backtest(calculated_kabu_data)
 
