@@ -25,10 +25,14 @@ def process_stock_data(symbol: str, api_key: str = None) -> Tuple[str, str, str]
 
 def main():
     api_key = load_api_key()  # APIキーの読み込み
-    symbols = ['SPY', 'AAPL', '^N225', "7203.T", "7011.T", "9843.T", "6146.T", "6857.T"]  # 処理するシンボルのリスト
+    # CSVファイルから銘柄リストを読み込む
+    symbols_NY = pd.read_csv('./symbols/symbols_NY.csv')['symbol'].tolist()
+    symbols_JP = pd.read_csv('./symbols/symbols_JP.csv')['symbol'].tolist()
+    all_symbols = list(set(symbols_NY + symbols_JP))
+    print(all_symbols)
     signals = []
 
-    for symbol in symbols:
+    for symbol in all_symbols:
         signals.append(process_stock_data(symbol, api_key))
 
     # まとめてシグナルを送信

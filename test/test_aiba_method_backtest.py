@@ -61,7 +61,8 @@ def run_backtest(kabuData: pd.DataFrame) -> None:
     print(f"Return: {(final_value - initial_cash) / initial_cash * 100:.2f}%")
 
 def main() -> None:
-    symbols_NY = ["SPY", "AAPL"]
+    # CSVファイルから銘柄リストを読み込む
+    symbols_NY = pd.read_csv('../src/symbols/symbols_NY.csv')['symbol'].tolist()
     for symbol in symbols_NY:
         kabuData: pd.DataFrame = get_stock_data(symbol, api_key)
         # 過去x年間のデータを抽出
@@ -72,7 +73,8 @@ def main() -> None:
         calculated_kabu_data = backtest_signals(kabuData)
         run_backtest(calculated_kabu_data)
 
-    symbols = ["^N225", "7203.T", "7011.T", "9843.T", "6146.T", "6857.T"]
+    # CSVファイルから銘柄リストを読み込む
+    symbols = pd.read_csv('../src/symbols/symbols_JP.csv')['symbol'].tolist()
     for symbol in symbols:
         kabuData: pd.DataFrame = get_yfinance_stock_data(symbol)
         # 過去x年間のデータを抽出
