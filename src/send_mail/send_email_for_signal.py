@@ -2,7 +2,7 @@ import requests
 
 def sendEmailForSignal(signals):
     # GASアプリのURL
-    web_app_url = "https://script.google.com/macros/s/AKfycby-AX2kQeZLDasKS0rAYtJ9rO_WcRAvFQtbYlIY-cqAqiiKb4099fP-F3Mp6BRprIExlQ/exec"
+    web_app_url = "https://script.google.com/macros/s/AKfycbx2yC_gW9lLH9J4NusDbNk34R26F8wr_0GPH9xr7v6IIMrdgehRlri2ZEaho9UtemB25g/exec"
 
     
     # シグナルデータを整形
