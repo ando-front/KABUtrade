@@ -64,6 +64,7 @@ def main() -> None:
     # CSVファイルから銘柄リストを読み込む
     symbols_NY = pd.read_csv('../src/symbols/symbols_NY.csv')['symbol'].tolist()
     for symbol in symbols_NY:
+        print("symbol",symbol)
         kabuData: pd.DataFrame = get_stock_data(symbol, api_key)
         # 過去x年間のデータを抽出
         x_year_ago = datetime.now() - timedelta(days=365 * 1)
@@ -76,9 +77,10 @@ def main() -> None:
     # CSVファイルから銘柄リストを読み込む
     symbols = pd.read_csv('../src/symbols/symbols_JP.csv')['symbol'].tolist()
     for symbol in symbols:
+        print("symbol",symbol)
         kabuData: pd.DataFrame = get_yfinance_stock_data(symbol)
         # 過去x年間のデータを抽出
-        x_year_ago = datetime.now() - timedelta(days=365 * 1)
+        x_year_ago = datetime.now() - timedelta(days=365 * 5)
         kabuData = kabuData[kabuData.index >= x_year_ago.strftime('%Y-%m-%d')]
         # 株価のヘッダー名統一
         kabuData: pd.DataFrame = standardize_headers(kabuData)
