@@ -31,7 +31,7 @@ jobs:
         working-directory: ./src
 
       - name: Run script
-        run: python src/main.py
+        run: python main.py
         env:
           ALPHAVANTAGE_API_KEY: ${{ secrets.ALPHAVANTAGE_API_KEY }}
         working-directory: ./src
