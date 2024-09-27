@@ -26,8 +26,8 @@ def process_stock_data(symbol: str, api_key: str = None) -> Tuple[str, str, str]
 def main():
     api_key = load_api_key()  # APIキーの読み込み
     # CSVファイルから銘柄リストを読み込む
-    symbols_NY = pd.read_csv('./symbols/symbols_NY.csv')['symbol'].tolist()
-    symbols_JP = pd.read_csv('./symbols/symbols_JP.csv')['symbol'].tolist()
+    symbols_NY = pd.read_csv('symbols/symbols_NY.csv')['symbol'].tolist()
+    symbols_JP = pd.read_csv('symbols/symbols_JP.csv')['symbol'].tolist()
     all_symbols = list(set(symbols_NY + symbols_JP))
     print(all_symbols)
     signals = []
