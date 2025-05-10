@@ -15,10 +15,7 @@ api_key = os.getenv("API_KEY")
 # 共通売買シグナル計算関数
 def process_stock_data(symbol: str, api_key: str = None) -> Tuple[str, str, str]:
     try:
-        if symbol in ['SPY', 'AAPL']:
-            kabuData = get_stock_data(symbol, api_key)
-        else:
-            kabuData = get_yfinance_stock_data(symbol)
+        kabuData = get_stock_data(symbol, api_key)
         
         if kabuData.empty:
             print(f"Warning: No data retrieved for symbol {symbol}. Skipping.")
