@@ -44,20 +44,22 @@ def plot_stock_data(symbol: str, start: str, end: str) -> pd.DataFrame:
     # plt.show()
     return all_data
 
-def get_yfinance_stock_data(symbol: str) -> pd.DataFrame:
-    try:
-        end_date = datetime.now()
-        start_date = end_date - timedelta(days=365 * 10)
-        # 銘柄コードのフォーマットを確認
-        if not symbol.endswith(".T") and symbol.isdigit():
-            symbol += ".T"
-        KabuData = get_stock_data(symbol, start=start_date.strftime('%Y-%m-%d'), end=end_date.strftime('%Y-%m-%d'))
-        if KabuData.empty:
-            print(f"Warning: No data retrieved for symbol {symbol}.")
-        return KabuData.sort_index(ascending=True)
-    except Exception as e:
-        print(f"Failed to get ticker '{symbol}' reason: {e}")
-        return pd.DataFrame()
+def get_yfinance_stock_data(symbol: str, max_retries: int = 3, retry_delay: int = 5) -> pd.DataFrame:
+    for attempt in range(max_retries):
+        try:
+            ticker = yf.Ticker(symbol)
+            data = ticker.history(period="max")
+            if not data.empty:
+                return data
+        except Exception as e:
+            print(f"Attempt {attempt + 1}: {str(e)}")
+            if attempt < max_retries - 1:
+                print(f"Retrying in {retry_delay} seconds...")
+                time.sleep(retry_delay)
+            continue
+    
+    print(f"Failed to retrieve data for {symbol} after {max_retries} attempts.")
+    return None
 
 if __name__ == '__main__':
     get_yfinance_stock_data()

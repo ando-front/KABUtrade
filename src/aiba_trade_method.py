@@ -5,8 +5,8 @@ import logging
 
 import pandas as pd
 
-from calculaters.signals import calculate_signals
-from calculaters.trends import count_trend_days
+from src.calculaters.signals import calculate_signals
+from src.calculaters.trends import count_trend_days
 
 # import http.client
 

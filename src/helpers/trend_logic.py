@@ -1,17 +1,15 @@
 import pandas as pd
 from typing import List, Union
 
-def standardize_headers(kabuData: pd.DataFrame) -> pd.DataFrame:
-    # ヘッダー名のマッピング
-    header_mapping = {
-        'Close': '4. close',
+def standardize_headers(df: pd.DataFrame) -> pd.DataFrame:
+    column_mapping = {
         'Open': '1. open',
         'High': '2. high',
-        'Low': '3. low'
+        'Low': '3. low',
+        'Close': '4. close',
+        'Volume': '5. volume'
     }
-    # ヘッダー名を統一
-    kabuData = kabuData.rename(columns=header_mapping)
-    return kabuData
+    return df.rename(columns=column_mapping)
 
 def is_buy_signal(kabuData: pd.DataFrame, period: int) -> pd.Series:
     return (

@@ -7,13 +7,16 @@ import logging
 from dotenv import load_dotenv
 import time
 
-sys.path.append(os.path.join(os.path.dirname(__file__), '../src'))
-from helpers.trend_logic import standardize_headers
-from get_stock_data.get_yahoo_finance import get_yfinance_stock_data
-import aiba_trade_method
-from calculaters.signals import calculate_signals
-from calculaters.trends import count_trend_days
-from get_stock_data.get_alpha_vantage import get_stock_data
+# プロジェクトのルートディレクトリをPYTHONPATHに追加
+project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.append(project_root)
+
+from src.helpers.trend_logic import standardize_headers
+from src.get_stock_data.get_yahoo_finance import get_yfinance_stock_data
+from src import aiba_trade_method
+from src.calculaters.signals import calculate_signals
+from src.calculaters.trends import count_trend_days
+from src.get_stock_data.get_alpha_vantage import get_stock_data
 
 # ロギングの設定
 # logging.basicConfig()
@@ -63,37 +66,54 @@ def run_backtest(kabuData: pd.DataFrame) -> None:
 
 def main() -> None:
     # CSVファイルから銘柄リストを読み込む
-    symbols_NY = pd.read_csv('src/symbols/symbols_NY.csv')['symbol'].tolist()
+    symbols_NY = pd.read_csv('src/symbols/symbols_NY.csv')['symbol'].tolist()[:3]
     for symbol in symbols_NY:
-        print("symbol",symbol)
-        kabuData: pd.DataFrame = get_stock_data(symbol, api_key)
-        # 過去x年間のデータを抽出
-        x_year_ago = datetime.now() - timedelta(days=365 * 1)
-        kabuData = kabuData[kabuData.index >= x_year_ago.strftime('%Y-%m-%d')]
-        # 株価のヘッダー名統一
-        kabuData: pd.DataFrame = standardize_headers(kabuData)
-        calculated_kabu_data = backtest_signals(kabuData)
-        run_backtest(calculated_kabu_data)
+        print("symbol", symbol)
+        try:
+            kabuData = get_stock_data(symbol, api_key=None)
+            if kabuData is None or kabuData.empty:
+                print(f"Warning: No data retrieved for symbol {symbol}. Skipping...")
+                continue
+                
+            # 過去x年間のデータを抽出
+            x_year_ago = datetime.now() - timedelta(days=365 * 1)
+            kabuData.index = pd.to_datetime(kabuData.index)
+            kabuData = kabuData[kabuData.index >= x_year_ago.strftime('%Y-%m-%d')]
+            
+            if kabuData.empty:
+                print(f"Warning: No data in specified date range for {symbol}. Skipping...")
+                continue
+                
+            calculated_kabu_data = backtest_signals(kabuData)
+            run_backtest(calculated_kabu_data)
+            
+        except Exception as e:
+            print(f"Error processing symbol {symbol}: {e}")
+            continue
+            
+        # APIレート制限対策の待機時間
+        time.sleep(10)  # 10秒待機
 
     # CSVファイルから銘柄リストを読み込む
-    symbols = pd.read_csv('src/symbols/symbols_JP.csv')['symbol'].tolist()
+    symbols = pd.read_csv('src/symbols/symbols_JP.csv')['symbol'].tolist()[:3]
     for symbol in symbols:
         print("symbol",symbol)
         try:
             if ".T" not in symbol:
                 symbol = symbol + ".T"
-            kabuData: pd.DataFrame = get_stock_data(symbol, api_key)
+            kabuData: pd.DataFrame = get_stock_data(symbol, api_key=None) # api_keyは不要なのでNoneを渡す
             # 過去x年間のデータを抽出
             x_year_ago = datetime.now() - timedelta(days=365 * 5)
+            kabuData.index = pd.to_datetime(kabuData.index)
             kabuData = kabuData[kabuData.index >= x_year_ago.strftime('%Y-%m-%d')]
             # 株価のヘッダー名統一
             kabuData: pd.DataFrame = standardize_headers(kabuData)
             calculated_kabu_data = backtest_signals(kabuData)
             run_backtest(calculated_kabu_data)
-        except ValueError as e:
+        except Exception as e:
             print(f"Error getting data for symbol {symbol}: {e}")
             continue
-        time.sleep(5)
+        time.sleep(60)
 
 if __name__ == '__main__':
     main()
