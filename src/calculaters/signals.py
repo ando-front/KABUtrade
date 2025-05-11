@@ -1,6 +1,6 @@
 from typing import List
 import pandas as pd
-from helpers.trend_logic import is_break_5d, is_break_down_5d, is_buy_signal, is_dead_cross, is_golden_cross, is_pampakapam, is_sell_signal, is_trend
+from src.helpers.trend_logic import is_break_5d, is_break_down_5d, is_buy_signal, is_dead_cross, is_golden_cross, is_pampakapam, is_sell_signal, is_trend
 
 # シグナルの生成
 def calculate_signals(kabuData: pd.DataFrame, UP_DOWN_PERIODS: List[int], SMA_PERIODS: List[int], CROSS_PERIODS: List[int]) -> pd.DataFrame:
