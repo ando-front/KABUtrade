@@ -8,7 +8,7 @@ KABUtrade は、株価データに基づいて売買シグナルを生成し、�
 
 本システムは、以下の主要なコンポーネントで構成されています。
 
-- **データ取得モジュール**: Alpha Vantage および Yahoo Finance から株価データを取得します。
+- **データ取得モジュール**: Yahoo Finance から株価データを取得します。
 - **計算モジュール**: 取得した株価データに対して、移動平均線、トレンド日数、各種売買シグナルを計算します。
 - **シグナル判定モジュール**: 計算されたデータから最終的な売買シグナルを判定します。
 - **通知モジュール**: 生成されたシグナルを Google Apps Script (GAS) を介してメールで通知します。
@@ -21,20 +21,18 @@ KABUtrade は、株価データに基づいて売買シグナルを生成し、�
 システムのメインエントリーポイントです。
 
 - **機能**:
-    - Alpha Vantage および Yahoo Finance から株価データを取得します。
+    - Yahoo Finance から株価データを取得します。
     - 取得した株価データを `aiba_trade_method.main` 関数に渡し、売買シグナルを計算します。
     - 計算されたシグナルを `send_email_for_signal.sendEmailForSignal` 関数に渡し、メールで通知します。
-    - `symbols/symbols_NY.csv` と `symbols/symbols_JP.csv` から監視対象の銘柄リストを読み込みます。
+    - `src/symbols/symbols_NY.csv` と `src/symbols/symbols_JP.csv` から監視対象の銘柄リストを読み込みます。
 - **主要関数**:
-    - `process_stock_data(symbol: str, api_key: str = None) -> Tuple[str, str, str]`:
-        - 指定された銘柄の株価データを取得し、シグナルを計算します。
-        - 銘柄が 'SPY' または 'AAPL' の場合は Alpha Vantage を使用し、それ以外の場合は Yahoo Finance を使用します。
+    - `process_stock_data(symbol: str) -> Tuple[str, str, str]`:
+        - 指定された銘柄の株価データをYahoo Financeから取得し、シグナルを計算します。
         - 取得したデータが空の場合はスキップします。
         - ヘッダー名を統一します。
         - `aiba_trade_method.main` を呼び出し、シグナルを計算します。
         - 銘柄、シグナルタイプ、シグナル種別を返します。
     - `main()`:
-        - API キーを読み込みます。
         - 銘柄リストを読み込み、各銘柄に対して `process_stock_data` を呼び出します。
         - 全てのシグナルをまとめて `send_email_for_signal.sendEmailForSignal` に渡します。
 
@@ -79,21 +77,13 @@ KABUtrade は、株価データに基づいて売買シグナルを生成し、�
 
 - **機能**:
     - 上昇トレンドと下降トレンドの日数を計算します。
+    - トレンドの閾値は5日です。
 - **主要関数**:
     - `count_trend_days(kabuData: pd.DataFrame) -> pd.DataFrame`: 上昇トレンドと下降トレンドの日数をデータフレームに追加します。
     - `calculate_up_trend(kabuData: pd.DataFrame, i: int) -> int`: 指定されたインデックスにおける上昇トレンドの日数を計算します。
     - `calculate_down_trend(kabuData: pd.DataFrame, i: int) -> int`: 指定されたインデックスにおける下降トレンドの日数を計算します。
 
-#### 3.5. `src/get_stock_data/get_alpha_vantage.py`
-
-Alpha Vantage から株価データを取得します。
-
-- **機能**:
-    - Alpha Vantage API を使用して日次株価データを取得します。
-- **主要関数**:
-    - `get_stock_data(symbol: str, api_key: str) -> pd.DataFrame`: 指定された銘柄の株価データを取得し、データフレームとして返します。
-
-#### 3.6. `src/get_stock_data/get_yahoo_finance.py`
+#### 3.5. `src/get_stock_data/get_yahoo_finance.py`
 
 Yahoo Finance から株価データを取得します。
 
@@ -107,7 +97,7 @@ Yahoo Finance から株価データを取得します。
     - `plot_stock_data(symbol: str, start: str, end: str) -> pd.DataFrame`: 株価データをプロットします（現在はコメントアウトされています）。
     - `get_yfinance_stock_data(symbol: str) -> pd.DataFrame`: Yahoo Finance から過去10年間の株価データを取得します。
 
-#### 3.7. `src/google_app_scripts/postMail.js`
+#### 3.6. `src/google_app_scripts/postMail.js`
 
 Google Apps Script (GAS) で動作するメール送信スクリプトです。
 
@@ -119,12 +109,12 @@ Google Apps Script (GAS) で動作するメール送信スクリプトです。
     - `doGet(e)`: GET リクエストに対する応答（POST のみ受け付ける旨のメッセージを返します）。
     - `doPost(e)`: POST リクエストを受け取り、メールを送信します。
 
-#### 3.8. `src/helpers/trend_logic.py`
+#### 3.7. `src/helpers/trend_logic.py`
 
 トレンド判定やシグナル計算の補助関数を提供します。
 
 - **機能**:
-    - データフレームのヘッダー名を統一します。
+    - データフレームのヘッダー名を統一します。`yfinance`から取得したMultiIndexのDataFrameをフラット化し、適切な列名にリネームします。
     - 連続陽線/陰線、ゴールデンクロス/デッドクロス、パンパカパン、下半身、くちばしなどの判定ロジックを提供します。
 - **主要関数**:
     - `standardize_headers(kabuData: pd.DataFrame) -> pd.DataFrame`: ヘッダー名を統一します。
@@ -175,13 +165,11 @@ graph TD
     end
 
     subgraph "外部サービス"
-        C1["Alpha Vantage API"]
         C2["Yahoo Finance API"]
         C3["Google Apps Script (Mail)"]
     end
 
-    subgraph "データ取得 (get_stock_data)"
-        D1["get_alpha_vantage.py"]
+    subgraph "データ取得"
         D2["get_yahoo_finance.py"]
     end
 
@@ -204,13 +192,10 @@ graph TD
 
     A --"1. 銘柄リスト読込"--> B1
     A --"1. 銘柄リスト読込"--> B2
-    A --"2. process_stock_data"--> D1
     A --"2. process_stock_data"--> D2
     
-    D1 --"3. 株価データ取得"--> C1
     D2 --"3. 株価データ取得"--> C2
     
-    D1 --"4. データ返却"--> A
     D2 --"4. データ返却"--> A
     
     A --"5. ヘッダー統一"--> G
@@ -234,16 +219,16 @@ graph TD
 ### 5. ワークフロー
 
 1. `main.py` が実行されます。
-2. `main.py` は `symbols/symbols_NY.csv` と `symbols/symbols_JP.csv` から銘柄リストを読み込みます。
+2. `main.py` は `src/symbols/symbols_NY.csv` と `src/symbols/symbols_JP.csv` から銘柄リストを読み込みます。
 3. 各銘柄に対して `process_stock_data` 関数を呼び出します。
-4. `process_stock_data` は、銘柄に応じて Alpha Vantage または Yahoo Finance から株価データを取得します。
+4. `process_stock_data` は、Yahoo Finance から株価データを取得します。
 5. 取得した株価データは `aiba_trade_method.main` に渡されます。
 6. `aiba_trade_method.main` は、移動平均線、トレンド、各種シグナル（ゴールデンクロス/デッドクロス、パンパカパン、下半身、くちばしなど）を計算します。
 7. 最終的なシグナルが `main.py` に返されます。
 8. 全ての銘柄のシグナルが収集された後、`send_email_for_signal.sendEmailForSignal` を介して Google Apps Script に送信されます。
 9. Google Apps Script は、受け取ったシグナル情報に基づいてメールを生成し、指定されたメールアドレスに送信します。
 
-### 5. 今後の改善点
+### 6. 今後の改善点
 
 - **エラーハンドリングの強化**: 各モジュールでのエラーハンドリングをより詳細に行い、堅牢性を高める。
 - **設定の一元化**: `SMA_PERIODS` などの定数を設定ファイルにまとめる。
