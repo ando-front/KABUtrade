@@ -39,41 +39,41 @@ def calculate_sma(data: pd.DataFrame, periods: List[int]) -> pd.DataFrame:
 # ゴールデンクロスもデッドクロスもない場合、連続上昇日数または連続下落日数に基づくシグナル、移動平均に基づくシグナルをチェックします。
 # チェックの結果として、シグナルを返却します
 def check_cross_signals(latest_data: pd.Series) -> Tuple[Optional[str], Optional[str]]:
-    if latest_data['Buy_Signal_golden_cross'] and latest_data['is_up_trend']:
+    if latest_data['Buy_Signal_golden_cross'].item() and latest_data['is_up_trend'].item():
         print('Buy Signal: Golden Cross')
         return 'Buy', 'Golden Cross'
-    elif latest_data['Sell_Signal_dead_cross'] and latest_data['is_down_trend']:
+    elif latest_data['Sell_Signal_dead_cross'].item() and latest_data['is_down_trend'].item():
         print('Sell Signal: Dead Cross')
         return 'Sell', 'Dead Cross'
     return None, None
 
 def check_up_down_signals(latest_data: pd.Series, UP_DOWN_PERIODS: List[int]) -> Tuple[Optional[str], Optional[str]]:
     for period in UP_DOWN_PERIODS:
-        if latest_data[f'Buy_Signal_{period}'] and latest_data['is_up_trend']:
+        if latest_data[f'Buy_Signal_{period}'].item() and latest_data['is_up_trend'].item():
             print(f'Buy Signal: Up for {period} days')
             return 'Buy', f'Up for {period} days'
-        elif latest_data[f'Sell_Signal_{period}'] and latest_data['is_down_trend']:
+        elif latest_data[f'Sell_Signal_{period}'].item() and latest_data['is_down_trend'].item():
             print(f'Sell Signal: Down for {period} days')
             return 'Sell', f'Down for {period} days'
     return None, None
 
 def check_other_signals(latest_data: pd.Series) -> Tuple[Optional[str], Optional[str]]:
-    if latest_data['Buy_Signal_MA_PPP'] and latest_data['is_up_trend']:
+    if latest_data['Buy_Signal_MA_PPP'].item() and latest_data['is_up_trend'].item():
         print('Buy Signal: PPP')
         return 'Buy', 'PPP'
-    elif latest_data['Sell_Signal_MA_reverse_PPP'] and latest_data['is_down_trend']:
+    elif latest_data['Sell_Signal_MA_reverse_PPP'].item() and latest_data['is_down_trend'].item():
         print('Sell Signal: Reverse PPP')
         return 'Sell', 'Reverse PPP'
-    elif latest_data['buy_signal_lower_half'] and latest_data['is_up_trend']:
+    elif latest_data['buy_signal_lower_half'].item() and latest_data['is_up_trend'].item():
         print('Buy Signal: Lower Half')
         return 'Buy', 'Lower Half'
-    elif latest_data['sell_signal_Reverse_lower_half'] and latest_data['is_down_trend']:
+    elif latest_data['sell_signal_Reverse_lower_half'].item() and latest_data['is_down_trend'].item():
         print('Sell Signal: Reverse Lower Half')
         return 'Sell', 'Reverse Lower Half'
-    elif latest_data['buy_signal_bird_beak'] and latest_data['is_up_trend']:
+    elif latest_data['buy_signal_bird_beak'].item() and latest_data['is_up_trend'].item():
         print('Buy Signal: Bird Beak')
         return 'Buy', 'Bird Beak'
-    elif latest_data['sell_signal_reverse_bird_beak'] and latest_data['is_down_trend']:
+    elif latest_data['sell_signal_reverse_bird_beak'].item() and latest_data['is_down_trend'].item():
         print('Sell Signal: Reverse Bird Beak')
         return 'Sell', 'Reverse Bird Beak'
     return None, None
@@ -125,8 +125,7 @@ def main(kabuData: pd.DataFrame) -> Tuple[str, str]:
     
     # get_latest_signals関数を呼び出し、結果をsignalTypeとsignalKindに割り当てる
     signalType, signalKind = get_latest_signals(calculated_kabu_data, UP_DOWN_PERIODS)
-    print(f"買いor売りシグナルSignal Typeの結果: {signalType}")
-    print(f"移動平均線のシグナルタイプSignal Kindの結果: {signalKind}")
+    
     
     # データプロット関数を実行すると処理が止まるので、コメントアウトしています
     # create_graph(calculated_kabu_data)
