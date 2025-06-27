@@ -10,8 +10,8 @@ def count_trend_days(kabuData: pd.DataFrame) -> pd.DataFrame:
         kabuData.at[i, 'up_trend_count'] = calculate_up_trend(kabuData, i)
         kabuData.at[i, 'down_trend_count'] = calculate_down_trend(kabuData, i)
 
-    kabuData['is_up_trend'] = kabuData['up_trend_count'] >= 60
-    kabuData['is_down_trend'] = kabuData['down_trend_count'] >= 60
+    kabuData['is_up_trend'] = kabuData['up_trend_count'] >= 5
+    kabuData['is_down_trend'] = kabuData['down_trend_count'] >= 5
 
     return kabuData
 
