@@ -33,6 +33,9 @@ def main():
     for symbol in all_symbols:
         signals.append(process_stock_data(symbol))
 
+    # "No Signal"以外のシグナルをフィルタリング
+    signals = [s for s in signals if s[1] != 'No Signal']
+
     # まとめてシグナルを送信
     print(signals)
     send_email_for_signal.sendEmailForSignal(signals)
