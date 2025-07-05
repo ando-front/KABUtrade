@@ -1,7 +1,10 @@
 import pandas as pd
 from typing import Optional
 from .get_yahoo_finance import get_yfinance_stock_data
-from ..helpers.trend_logic import standardize_headers
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+from helpers.trend_logic import standardize_headers
 
 def get_stock_data(
     symbol: str, 
