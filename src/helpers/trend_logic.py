@@ -2,14 +2,29 @@ import pandas as pd
 from typing import List, Union
 
 def standardize_headers(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    yfinanceのカラム名をAlpha Vantage形式に統一
+    
+    Args:
+        df: yfinanceから取得したDataFrame
+    
+    Returns:
+        pd.DataFrame: 標準化されたヘッダーのDataFrame
+    """
+    # yfinance → Alpha Vantage形式の変換マッピング
     column_mapping = {
         'Open': '1. open',
-        'High': '2. high',
+        'High': '2. high', 
         'Low': '3. low',
         'Close': '4. close',
-        'Volume': '5. volume'
+        'Volume': '5. volume',
+        'Adj Close': '6. adjusted_close'  # yfinance特有の調整後終値
     }
-    return df.rename(columns=column_mapping)
+    
+    # 存在するカラムのみマッピング
+    existing_columns = {k: v for k, v in column_mapping.items() if k in df.columns}
+    
+    return df.rename(columns=existing_columns)
 
 def is_buy_signal(kabuData: pd.DataFrame, period: int) -> pd.Series:
     return (

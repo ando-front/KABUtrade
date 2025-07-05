@@ -1,8 +1,9 @@
+import os
 from alpha_vantage.timeseries import TimeSeries
 import pandas as pd
 
 # Alpha Vantage APIキーを設定
-api_key = 'YOUR_API_KEY'  # ご自身のAPIキーをここに設定
+api_key = os.getenv("API_KEY")  # ご自身のAPIキーをここに設定
 
 symbol = 'SOXL'
 

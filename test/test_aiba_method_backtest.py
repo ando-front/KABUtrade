@@ -65,17 +65,40 @@ def run_backtest(kabuData: pd.DataFrame) -> None:
     print(f"Return: {(final_value - initial_cash) / initial_cash * 100:.2f}%")
 
 def main() -> None:
-    # CSVファイルから銘柄リストを読み込む
-    symbols_NY = pd.read_csv('src/symbols/symbols_NY.csv')['symbol'].tolist()[:3]
-    for symbol in symbols_NY:
-        print("symbol", symbol)
+    # プロジェクトルートからsymbolsファイルの絶対パスを取得
+    symbols_ny_path = os.path.join(project_root, "src/symbols/symbols_NY.csv")
+    symbols_jp_path = os.path.join(project_root, "src/symbols/symbols_JP.csv")
+
+    print("Starting backtest with very conservative rate limiting...")
+    print("Pre-emptive wait of 15 minutes to ensure clean start and rate limit reset...")
+    print("If this takes too long, you can interrupt with Ctrl+C and try again later.")
+    time.sleep(900)  # 15分待機でrate limitリセットを期待
+    
+    # NYシンボルの処理（最初の1つだけテスト）
+    symbols_NY = pd.read_csv(symbols_ny_path)['symbol'].tolist()[:1]  # テスト用に1つに減らす
+    for i, symbol in enumerate(symbols_NY):
+        print(f"Processing NY symbol {i+1}/{len(symbols_NY)}: {symbol}")
         try:
-            kabuData = get_stock_data(symbol, api_key=None)
+            # より保守的な待機時間（rate limit対策）
+            if i == 0:
+                print("Initial wait of 30 seconds to avoid rate limits...")
+                time.sleep(30)
+            elif i > 0:
+                print("Waiting 120 seconds to avoid rate limits...")
+                time.sleep(120)
+                
+            # yfinanceを直接使用してテスト（より保守的な設定）
+            print(f"Fetching data directly for {symbol}...")
+            kabuData = get_yfinance_stock_data(symbol, period="1y", max_retries=3, base_retry_delay=60)
+            
             if kabuData is None or kabuData.empty:
                 print(f"Warning: No data retrieved for symbol {symbol}. Skipping...")
                 continue
+            
+            # データの標準化
+            kabuData = standardize_headers(kabuData)
                 
-            # 過去x年間のデータを抽出
+            # 過去1年間のデータフィルタリング
             x_year_ago = datetime.now() - timedelta(days=365 * 1)
             kabuData.index = pd.to_datetime(kabuData.index)
             kabuData = kabuData[kabuData.index >= x_year_ago.strftime('%Y-%m-%d')]
@@ -84,36 +107,72 @@ def main() -> None:
                 print(f"Warning: No data in specified date range for {symbol}. Skipping...")
                 continue
                 
+            print(f"Data loaded for {symbol}: {len(kabuData)} records")
+            print(f"Date range: {kabuData.index.min()} to {kabuData.index.max()}")
+            print(f"Columns: {list(kabuData.columns)}")
+            
             calculated_kabu_data = backtest_signals(kabuData)
             run_backtest(calculated_kabu_data)
+            print(f"Completed analysis for {symbol}")
             
         except Exception as e:
-            print(f"Error processing symbol {symbol}: {e}")
+            print(f"Error processing NY symbol {symbol}: {e}")
+            import traceback
+            traceback.print_exc()
             continue
-            
-        # APIレート制限対策の待機時間
-        time.sleep(10)  # 10秒待機
 
-    # CSVファイルから銘柄リストを読み込む
-    symbols = pd.read_csv('src/symbols/symbols_JP.csv')['symbol'].tolist()[:3]
-    for symbol in symbols:
-        print("symbol",symbol)
+    print("NY symbols processing completed. Waiting before JP symbols...")
+    time.sleep(180)  # 3分待機（より保守的）
+
+    # JPシンボルの処理（最初の1つだけテスト）
+    symbols = pd.read_csv(symbols_jp_path)['symbol'].tolist()[:1]  # テスト用に1つに減らす
+    for i, symbol in enumerate(symbols):
+        print(f"Processing JP symbol {i+1}/{len(symbols)}: {symbol}")
         try:
+            # 日本株のシンボル調整
             if ".T" not in symbol:
                 symbol = symbol + ".T"
-            kabuData: pd.DataFrame = get_stock_data(symbol, api_key=None) # api_keyは不要なのでNoneを渡す
-            # 過去x年間のデータを抽出
-            x_year_ago = datetime.now() - timedelta(days=365 * 5)
+                
+            if i == 0:
+                print("Initial wait of 30 seconds...")
+                time.sleep(30)
+            elif i > 0:
+                print("Waiting 120 seconds to avoid rate limits...")
+                time.sleep(120)
+                
+            # yfinanceを直接使用してテスト（より保守的な設定）
+            print(f"Fetching data directly for {symbol}...")
+            kabuData = get_yfinance_stock_data(symbol, period="2y", max_retries=3, base_retry_delay=60)
+            
+            if kabuData is None or kabuData.empty:
+                print(f"Warning: No data retrieved for symbol {symbol}. Skipping...")
+                continue
+            
+            # データの標準化
+            kabuData = standardize_headers(kabuData)
+                
+            # 過去2年間のデータフィルタリング  
+            x_year_ago = datetime.now() - timedelta(days=365 * 2)
             kabuData.index = pd.to_datetime(kabuData.index)
             kabuData = kabuData[kabuData.index >= x_year_ago.strftime('%Y-%m-%d')]
-            # 株価のヘッダー名統一
-            kabuData: pd.DataFrame = standardize_headers(kabuData)
+            
+            if kabuData.empty:
+                print(f"Warning: No data in specified date range for {symbol}. Skipping...")
+                continue
+                
+            print(f"Data loaded for {symbol}: {len(kabuData)} records")
+            print(f"Date range: {kabuData.index.min()} to {kabuData.index.max()}")
+            print(f"Columns: {list(kabuData.columns)}")
+            
             calculated_kabu_data = backtest_signals(kabuData)
             run_backtest(calculated_kabu_data)
+            print(f"Completed analysis for {symbol}")
+            
         except Exception as e:
-            print(f"Error getting data for symbol {symbol}: {e}")
+            print(f"Error processing JP symbol {symbol}: {e}")
+            import traceback
+            traceback.print_exc()
             continue
-        time.sleep(60)
 
 if __name__ == '__main__':
     main()
