@@ -60,9 +60,14 @@ def main():
         all_symbols = args.symbols_only
         print(f"指定銘柄のみ処理: {all_symbols}")
     else:
+        # スクリプトのディレクトリを取得
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        # CSVファイルへの絶対パスを構築
+        ny_csv_path = os.path.join(script_dir, 'symbols', 'symbols_NY.csv')
+        jp_csv_path = os.path.join(script_dir, 'symbols', 'symbols_JP.csv')
         # CSVファイルから銘柄リストを読み込む
-        symbols_NY = pd.read_csv('symbols/symbols_NY.csv')['symbol'].tolist()
-        symbols_JP = pd.read_csv('symbols/symbols_JP.csv')['symbol'].tolist()
+        symbols_NY = pd.read_csv(ny_csv_path)['symbol'].tolist()
+        symbols_JP = pd.read_csv(jp_csv_path)['symbol'].tolist()
         all_symbols = list(set(symbols_NY + symbols_JP))
         print(f"全銘柄処理: {len(all_symbols)} 銘柄")
     
