@@ -44,6 +44,7 @@ def calculate_sma(data: pd.DataFrame, periods: List[int]) -> pd.DataFrame:
 # 最新のデータがゴールデンクロスかデッドクロスのシグナルを持っているかチェック
 # ゴールデンクロスもデッドクロスもない場合、連続上昇日数または連続下落日数に基づくシグナル、移動平均に基づくシグナルをチェックします。
 # チェックの結果として、シグナルを返却します
+
 def check_cross_signals(latest_data: pd.Series, relaxation_level: str = RelaxationLevel.NONE) -> Tuple[Optional[str], Optional[str]]:
     """ゴールデンクロス・デッドクロス判定（緩和対応版）"""
     if relaxation_level == RelaxationLevel.NONE:
@@ -158,28 +159,24 @@ def check_other_signals(latest_data: pd.Series, relaxation_level: str = Relaxati
             print('Sell Signal: Reverse Bird Beak (High Relaxed)')
             return 'Sell', 'Reverse Bird Beak (High Relaxed)'
     return None, None
+    return None, None
 
-# 最新の日付でのシグナルを出力（緩和対応版）
 def get_latest_signals(kabuData: pd.DataFrame, UP_DOWN_PERIODS: List[int], relaxation_level: str = RelaxationLevel.NONE) -> Tuple[Optional[str], Optional[str]]:
     """最新シグナル取得（緩和レベル対応）
-    
     Args:
         kabuData: 株価データ
         UP_DOWN_PERIODS: 上昇下降日数期間
         relaxation_level: 緩和レベル（NONE, MODERATE, HIGH）
-    
     Returns:
         シグナルタイプとシグナル種類のタプル
     """
     latest_data = kabuData.iloc[-1]
-    
     # 優先順位に従ってシグナルをチェック
     signal_type, signal_kind = check_cross_signals(latest_data, relaxation_level)
     if signal_type is None:
         signal_type, signal_kind = check_up_down_signals(latest_data, UP_DOWN_PERIODS, relaxation_level)
     if signal_type is None:
         signal_type, signal_kind = check_other_signals(latest_data, relaxation_level)
-    
     return signal_type, signal_kind
 
 # 後方互換性のための従来関数（非推奨）
@@ -211,39 +208,29 @@ def get_latest_signals_legacy(kabuData: pd.DataFrame, UP_DOWN_PERIODS: List[int]
 
 
 # 注文実行
-# このサンプルコードでは、実際の売買注文は行わず、シグナルの生成だけを行います。
 def main(kabuData: pd.DataFrame, relaxation_level: str = RelaxationLevel.NONE) -> Tuple[str, str]:
     """メイン処理（緩和レベル対応）
-    
     Args:
         kabuData: 株価データ
         relaxation_level: 緩和レベル（NONE, MODERATE, HIGH）
-    
     Returns:
         シグナルタイプとシグナル種類のタプル
     """
     # 移動平均線の計算
     kabuData = calculate_sma(kabuData, SMA_PERIODS)
-
     # 上昇トレンドと下降トレンドのカウント
     kabuData = count_trend_days(kabuData)
-
     # 陽線と陰線の判定
     kabuData['Up'] = kabuData['4. close'] > kabuData['1. open']
     kabuData['Down'] = kabuData['4. close'] < kabuData['1. open']
-
     calculated_kabu_data = calculate_signals(kabuData, UP_DOWN_PERIODS, SMA_PERIODS, CROSS_PERIODS)
-    
     # get_latest_signals関数を呼び出し、結果をsignalTypeとsignalKindに割り当てる
     signalType, signalKind = get_latest_signals(calculated_kabu_data, UP_DOWN_PERIODS, relaxation_level)
-    
     print(f"緩和レベル: {relaxation_level}")
     print(f"買いor売りシグナルSignal Typeの結果: {signalType}")
     print(f"移動平均線のシグナルタイプSignal Kindの結果: {signalKind}")
-    
     # データプロット関数を実行すると処理が止まるので、コメントアウトしています
     # create_graph(calculated_kabu_data)
-    
     return signalType, signalKind
 
 # 後方互換性のための従来関数
