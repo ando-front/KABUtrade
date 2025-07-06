@@ -25,10 +25,6 @@ from src.get_stock_data.get_alpha_vantage import get_stock_data
 # requests_log.setLevel(logging.DEBUG)
 # requests_log.propagate = True
 
-# Alpha VantageのAPIキーを設定
-load_dotenv()
-api_key = os.getenv("API_KEY")
-
 def backtest_signals(kabuData: pd.DataFrame) -> pd.DataFrame:
     kabuData = aiba_trade_method.calculate_sma(kabuData, aiba_trade_method.SMA_PERIODS)
     kabuData = count_trend_days(kabuData)
