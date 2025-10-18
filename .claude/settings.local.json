@@ -1,7 +1,12 @@
 {
   "permissions": {
     "allow": [
-      "Bash(python -c \"\nimport time\nstart = time.time()\n\nfrom typing import Tuple\nimport pandas as pd\nimport aiba_trade_method\nfrom get_stock_data.get_yahoo_finance import get_yfinance_stock_data_batch\nfrom helpers.trend_logic import standardize_headers\nfrom concurrent.futures import ThreadPoolExecutor, as_completed\n\ndef process_stock_data(symbol: str, kabuData: pd.DataFrame) -> Tuple[str, str, str]:\n    try:\n        if kabuData.empty:\n            return symbol, ''No Data'', ''No Data''\n        kabuData = standardize_headers(kabuData)\n        signalType, signalKind = aiba_trade_method.main(kabuData)\n        return symbol, signalType, signalKind\n    except Exception as e:\n        return symbol, ''Error'', str(e)\n\nsymbols_NY = pd.read_csv(''symbols/symbols_NY.csv'')[''symbol''].tolist()\nsymbols_JP = pd.read_csv(''symbols/symbols_JP.csv'')[''symbol''].tolist()\nall_symbols = list(set(symbols_NY + symbols_JP))\n\nprint(f''Processing {len(all_symbols)} symbols'')\nstock_data_dict = get_yfinance_stock_data_batch(all_symbols, period_days=400)\nprint(f''Data fetch time: {time.time()-start:.2f}s'')\n\nsignals = []\nwith ThreadPoolExecutor(max_workers=10) as executor:\n    future_to_symbol = {\n        executor.submit(process_stock_data, symbol, stock_data_dict.get(symbol, pd.DataFrame())): symbol\n        for symbol in all_symbols\n    }\n    for future in as_completed(future_to_symbol):\n        result = future.result()\n        signals.append(result)\n        \nsignals = [s for s in signals if s[1] != ''No Signal'']\nprint(f''Total time: {time.time()-start:.2f}s'')\nprint(f''Found {len(signals)} signals: {signals}'')\n\")"
+      "Bash(git push origin main)",
+      "Bash(git check-ignore -v .env data_cache/*.csv)",
+      "Bash(test -f .env)",
+      "Bash(awk '{print $1}')",
+      "Bash(python -m pip list --format=freeze)",
+      "Bash(python -c \"import pandas; import numpy; import matplotlib; import yfinance; print(''All imports successful'')\")"
     ],
     "deny": [],
     "ask": []
