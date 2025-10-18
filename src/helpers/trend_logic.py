@@ -1,24 +1,30 @@
 import pandas as pd
 from typing import List, Union
 
-def standardize_headers(kabuData: pd.DataFrame) -> pd.DataFrame:
-    # MultiIndexをフラット化し、列名を調整
-    if isinstance(kabuData.columns, pd.MultiIndex):
-        # 最初のレベルの列名を取得
-        kabuData.columns = kabuData.columns.get_level_values(0)
-
-    # ヘッダー名のマッピング
-    header_mapping = {
+def standardize_headers(df: pd.DataFrame) -> pd.DataFrame:
+    """
+    yfinanceのカラム名をAlpha Vantage形式に統一
+    
+    Args:
+        df: yfinanceから取得したDataFrame
+    
+    Returns:
+        pd.DataFrame: 標準化されたヘッダーのDataFrame
+    """
+    # yfinance → Alpha Vantage形式の変換マッピング
+    column_mapping = {
         'Open': '1. open',
-        'High': '2. high',
+        'High': '2. high', 
         'Low': '3. low',
         'Close': '4. close',
-        'Volume': 'Volume'
+        'Volume': '5. volume',
+        'Adj Close': '6. adjusted_close'  # yfinance特有の調整後終値
     }
-    # ヘッダー名を統一
-    kabuData = kabuData.rename(columns=header_mapping)
-
-    return kabuData
+    
+    # 存在するカラムのみマッピング
+    existing_columns = {k: v for k, v in column_mapping.items() if k in df.columns}
+    
+    return df.rename(columns=existing_columns)
 
 def is_buy_signal(kabuData: pd.DataFrame, period: int) -> pd.Series:
     return (
